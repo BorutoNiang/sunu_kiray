@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunu Kiray — Notre Santé</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #06100e;
+      --bg2:      #0c1f1a;
+      --bg3:      #102820;
+      --green:    #00e5a0;
+      --green2:   #00c896;
+      --green-dim:#00e5a022;
+      --amber:    #f5a623;
+      --text:     #e8f5f0;
+      --muted:    #7aa899;
+      --border:   #1e3d32;
+      --card:     #0e2019;
+      --red:      #ff5c5c;
+      --font-head:'Syne', sans-serif;
+      --font-body:'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: .5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 4rem;
+      background: rgba(6,16,14,.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .logo span { color: var(--green); }
+
+    .nav-links { display: flex; align-items: center; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 400;
+      letter-spacing: .3px;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--green);
+      color: var(--bg) !important;
+      padding: .5rem 1.3rem;
+      border-radius: 100px;
+      font-weight: 500 !important;
+      transition: background .2s, transform .15s !important;
+    }
+    .nav-cta:hover { background: var(--green2) !important; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 10rem 4rem 6rem;
+      overflow: hidden;
+    }
+
+    /* Radial glow background */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -10%; left: -5%;
+      width: 70vw; height: 80vh;
+      background: radial-gradient(ellipse, rgba(0,229,160,.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Floating grid decoration */
+    .hero-grid {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 50%;
+      opacity: .06;
+      background-image:
+        linear-gradient(var(--green) 1px, transparent 1px),
+        linear-gradient(90deg, var(--green) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: linear-gradient(to left, rgba(0,0,0,.8) 0%, transparent 80%);
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 680px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: var(--green-dim);
+      border: 1px solid rgba(0,229,160,.2);
+      color: var(--green);
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: .35rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+      animation: fadeUp .6s ease both;
+    }
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(.7); }
+    }
+
+    .hero h1 {
+      font-family: var(--font-head);
+      font-size: clamp(3rem, 6vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.02;
+      letter-spacing: -2px;
+      color: var(--text);
+      animation: fadeUp .6s .1s ease both;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .hero-sub {
+      margin-top: 1.6rem;
+      font-size: 1.1rem;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 520px;
+      animation: fadeUp .6s .2s ease both;
+    }
+
+    .hero-actions {
+      margin-top: 2.8rem;
+      display: flex; align-items: center; gap: 1.2rem;
+      animation: fadeUp .6s .3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .6rem;
+      background: var(--green);
+      color: var(--bg);
+      font-family: var(--font-body);
+      font-size: .95rem;
+      font-weight: 500;
+      padding: .85rem 2rem;
+      border-radius: 100px;
+      text-decoration: none;
+      border: none; cursor: pointer;
+      transition: background .2s, transform .15s, box-shadow .2s;
+    }
+    .btn-primary:hover {
+      background: var(--green2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,229,160,.2);
+    }
+    .btn-primary svg { transition: transform .2s; }
+    .btn-primary:hover svg { transform: translateX(3px); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: .5rem;
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 400;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .btn-ghost:hover { color: var(--text); }
+
+    /* Hero stats */
+    .hero-stats {
+      display: flex; gap: 3rem;
+      margin-top: 4rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid var(--border);
+      animation: fadeUp .6s .4s ease both;
+    }
+    .stat-item {}
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .stat-num span { color: var(--green); }
+    .stat-label {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: .3rem;
+      letter-spacing: .3px;
+    }
+
+    /* Hero right — live card */
+    .hero-visual {
+      position: absolute;
+      right: 4rem; top: 50%;
+      transform: translateY(-50%);
+      width: 340px;
+      animation: fadeUp .7s .3s ease both;
+      z-index: 2;
+    }
+
+    .live-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      backdrop-filter: blur(8px);
+    }
+    .live-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+    .live-label {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    .live-time { font-size: .75rem; color: var(--muted); }
+
+    .structure-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .7rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .structure-row:last-of-type { border-bottom: none; }
+    .s-name { font-size: .85rem; font-weight: 500; color: var(--text); }
+    .s-city { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+    .charge-bar-wrap { flex: 1; margin: 0 1rem; }
+    .charge-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .charge-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 1s ease;
+    }
+    .charge-pct { font-size: .75rem; font-weight: 600; min-width: 32px; text-align: right; }
+
+    .fill-ok     { background: var(--green); }
+    .fill-warn   { background: var(--amber); }
+    .fill-danger { background: var(--red); }
+    .pct-ok      { color: var(--green); }
+    .pct-warn    { color: var(--amber); }
+    .pct-danger  { color: var(--red); }
+
+    /* ── SECTION COMMUNE ── */
+    section {
+      position: relative;
+      padding: 7rem 4rem;
+    }
+    .section-tag {
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      color: var(--text);
+      max-width: 560px;
+    }
+    .section-title em { font-style: normal; color: var(--green); }
+    .section-sub {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      font-weight: 300;
+    }
+
+    /* ── FEATURES ── */
+    .features { background: var(--bg2); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5px;
+      margin-top: 4rem;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .feature-card {
+      background: var(--card);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: background .25s;
+    }
+    .feature-card:hover { background: #122519; }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feat-icon {
+      width: 44px; height: 44px;
+      background: var(--green-dim);
+      border: 1px solid rgba(0,229,160,.15);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+    }
+    .feat-title {
+      font-family: var(--font-head);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .6rem;
+    }
+    .feat-desc { font-size: .88rem; color: var(--muted); line-height: 1.65; font-weight: 300; }
+
+    /* ── COMMENT ÇA MARCHE ── */
+    .how { background: var(--bg); }
+    .steps {
+      margin-top: 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .steps-list { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: flex; gap: 1.5rem;
+      padding: 1.8rem 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: padding .2s;
+    }
+    .step:first-child { border-top: 1px solid var(--border); }
+    .step:hover { padding-left: .5rem; }
+    .step-num {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--border);
+      line-height: 1;
+      min-width: 2.5rem;
+      transition: color .2s;
+    }
+    .step:hover .step-num { color: var(--green); }
+    .step-body {}
+    .step-title {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .4rem;
+    }
+    .step-desc { font-size: .875rem; color: var(--muted); font-weight: 300; }
+
+    /* Mockup phone */
+    .phone-mockup {
+      width: 280px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 36px;
+      padding: 2rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .phone-notch {
+      width: 80px; height: 24px;
+      background: var(--bg);
+      border-radius: 0 0 14px 14px;
+      margin: 0 auto 1.5rem;
+      display: flex; align-items: center; justify-content: center;
+      gap: .4rem;
+    }
+    .notch-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+    .phone-inner { display: flex; flex-direction: column; gap: .8rem; }
+    .phone-row {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem 1rem;
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .phone-icon {
+      width: 32px; height: 32px;
+      background: var(--green-dim);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+    .phone-text-title { font-size: .8rem; font-weight: 500; color: var(--text); }
+    .phone-text-sub   { font-size: .7rem; color: var(--muted); margin-top: 1px; }
+    .phone-tag {
+      margin-left: auto;
+      font-size: .65rem;
+      font-weight: 600;
+      padding: .2rem .55rem;
+      border-radius: 100px;
+    }
+    .tag-green  { background: rgba(0,229,160,.12); color: var(--green); }
+    .tag-amber  { background: rgba(245,166,35,.12); color: var(--amber); }
+
+    /* ── PROFILS ── */
+    .profiles { background: var(--bg2); }
+    .profiles-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 1.5rem;
+      margin-top: 4rem;
+    }
+    .profile-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      transition: transform .25s, border-color .25s;
+    }
+    .profile-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(0,229,160,.25);
+    }
+    .profile-avatar {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .av-patient { background: rgba(0,229,160,.1); }
+    .av-medecin { background: rgba(245,166,35,.1); }
+    .av-admin   { background: rgba(100,150,255,.1); }
+    .profile-role {
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    .profile-title {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .profile-features { list-style: none; display: flex; flex-direction: column; gap: .55rem; }
+    .profile-features li {
+      font-size: .85rem;
+      color: var(--muted);
+      display: flex; align-items: flex-start; gap: .55rem;
+      font-weight: 300;
+    }
+    .profile-features li::before {
+      content: '→';
+      color: var(--green);
+      flex-shrink: 0;
+      font-size: .8rem;
+      margin-top: .05rem;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      background: var(--bg);
+      text-align: center;
+      padding: 8rem 4rem;
+    }
+    .cta-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(0,229,160,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section .section-title { margin: 0 auto 1rem; text-align: center; max-width: 100%; }
+    .cta-section .section-sub   { margin: 0 auto 2.5rem; text-align: center; }
+    .cta-btns { display: flex; justify-content: center; align-items: center; gap: 1.2rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 3rem 4rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .footer-logo span { color: var(--green); }
+    .footer-copy { font-size: .8rem; color: var(--muted); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { font-size: .8rem; color: var(--muted); text-decoration: none; transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      nav { padding: 1rem 2rem; }
+      .hero { padding: 8rem 2rem 4rem; }
+      .hero-visual { display: none; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .phone-mockup { display: none; }
+      .profiles-grid { grid-template-columns: 1fr; }
+      section { padding: 5rem 2rem; }
+      footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2.6rem; letter-spacing: -1px; }
+      .hero-stats { gap: 1.5rem; }
+      .hero-actions { flex-direction: column; align-items: flex-start; }
+      section { padding: 4rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAVIGATION ══ -->
+<nav>
+  <a href="#" class="logo">Sunu <span>Kiray</span></a>
+  <ul class="nav-links">
+    <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+    <li><a href="#comment">Comment ça marche</a></li>
+    <li><a href="#profils">Pour qui ?</a></li>
+    <li><a href="auth.html">Connexion</a></li>
+    <li><a href="auth.html" class="nav-cta">Commencer</a></li>
+  </ul>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-grid"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">🇸🇳 Plateforme médicale sénégalaise</div>
+
+    <h1>La santé<br />intelligente<br /><em>pour tous.</em></h1>
+
+    <p class="hero-sub">
+      Prenez rendez-vous en ligne, suivez la disponibilité des médecins en temps réel et réduisez les files d'attente dans les structures de santé au Sénégal.
+    </p>
+
+    <div class="hero-actions">
+      <a href="auth.html" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="#comment" class="btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M5.5 5.5L8.5 7l-3 1.5" fill="currentColor"/>
+        </svg>
+        Voir la démo
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">14<span>+</span></div>
+        <div class="stat-label">Régions couvertes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">200<span>+</span></div>
+        <div class="stat-label">Structures partenaires</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">-<span>60%</span></div>
+        <div class="stat-label">Temps d'attente</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live dashboard card -->
+  <div class="hero-visual">
+    <div class="live-card">
+      <div class="live-card-header">
+        <div class="live-label">
+          <div class="live-dot"></div>
+          Charge en direct
+        </div>
+        <div class="live-time" id="live-time">--:--</div>
+      </div>
+
+      <div class="structure-row">
+        <div>
+          <div class="s-name">Hôp. Principal</div>
+          <div class="s-city">Dakar</div>
+        </div>
+        <div class="charge-bar-wrap">
+          <div class="charge-bar">
+            <div class="charge-fill fill-danger" style="width:88%"></div>
+          </div>
+        </div>
+        <div class="charge-pct pct-danger">88%</div>
+      </div>
+
+      <div class="structure-row">
+        <div>
+          <div class="s-name">C.S. Pikine</div>
+          <div class="s-city">Dakar</div>
+        </div>
+        <div class="charge-bar-wrap">
+          <div class="charge-bar">
+            <div class="charge-fill fill-warn" style="width:62%"></div>
+          </div>
+        </div>
+        <div class="charge-pct pct-warn">62%</div>
+      </div>
+
+      <div class="structure-row">
+        <div>
+          <div class="s-name">Hôp. Thiès</div>
+          <div class="s-city">Thiès</div>
+        </div>
+        <div class="charge-bar-wrap">
+          <div class="charge-bar">
+            <div class="charge-fill fill-ok" style="width:34%"></div>
+          </div>
+        </div>
+        <div class="charge-pct pct-ok">34%</div>
+      </div>
+
+      <div class="structure-row">
+        <div>
+          <div class="s-name">C.S. Ziguinchor</div>
+          <div class="s-city">Ziguinchor</div>
+        </div>
+        <div class="charge-bar-wrap">
+          <div class="charge-bar">
+            <div class="charge-fill fill-ok" style="width:41%"></div>
+          </div>
+        </div>
+        <div class="charge-pct pct-ok">41%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FONCTIONNALITÉS ══ -->
+<section class="features" id="fonctionnalites">
+  <div class="section-tag reveal">Fonctionnalités</div>
+  <h2 class="section-title reveal">Tout ce dont vous<br />avez <em>besoin</em>.</h2>
+  <p class="section-sub reveal">Une plateforme pensée pour le contexte sénégalais, accessible même avec une connexion limitée.</p>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feat-icon">📅</div>
+      <div class="feat-title">Réservation en ligne</div>
+      <p class="feat-desc">Prenez rendez-vous depuis votre téléphone, 24h/24. Choisissez la structure, la spécialité et le créneau qui vous convient.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Tableau de bord temps réel</div>
+      <p class="feat-desc">Les administrateurs visualisent la charge de chaque structure instantanément et anticipent les pics de demande.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">🔔</div>
+      <div class="feat-title">Alertes automatiques</div>
+      <p class="feat-desc">Dès qu'une structure dépasse son seuil de charge, une alerte est générée et les médecins disponibles sont notifiés.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">🔄</div>
+      <div class="feat-title">Redéploiement dynamique</div>
+      <p class="feat-desc">Le système suggère automatiquement de rediriger les médecins disponibles vers les structures surchargées.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">💬</div>
+      <div class="feat-title">Confirmation par SMS</div>
+      <p class="feat-desc">Chaque rendez-vous est confirmé par un code SMS. Aucun smartphone requis pour les patients.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📈</div>
+      <div class="feat-title">Rapports statistiques</div>
+      <p class="feat-desc">Générez des rapports d'activité, de flux patients et de performance pour mieux planifier les ressources.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ COMMENT ÇA MARCHE ══ -->
+<section class="how" id="comment">
+  <div class="section-tag reveal">Comment ça marche</div>
+  <h2 class="section-title reveal">Simple, rapide,<br /><em>efficace.</em></h2>
+
+  <div class="steps">
+    <div class="steps-list reveal">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-body">
+          <div class="step-title">Créez votre compte</div>
+          <p class="step-desc">Inscrivez-vous en 2 minutes avec votre numéro de téléphone. Aucun document complexe requis.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-body">
+          <div class="step-title">Choisissez votre structure</div>
+          <p class="step-desc">Consultez la disponibilité en temps réel des hôpitaux et centres de santé près de chez vous.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-body">
+          <div class="step-title">Réservez un créneau</div>
+          <p class="step-desc">Sélectionnez la spécialité, le médecin et l'heure qui vous conviennent parmi les créneaux disponibles.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-body">
+          <div class="step-title">Recevez votre confirmation</div>
+          <p class="step-desc">Un code de confirmation vous est envoyé par SMS. Présentez-le à l'accueil le jour J.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-mockup reveal">
+      <div class="phone-notch">
+        <div class="notch-dot"></div>
+        <div class="notch-dot"></div>
+      </div>
+      <div class="phone-inner">
+        <div class="phone-row">
+          <div class="phone-icon">🏥</div>
+          <div>
+            <div class="phone-text-title">Hôp. Principal Dakar</div>
+            <div class="phone-text-sub">Médecine générale · 09h00</div>
+          </div>
+          <div class="phone-tag tag-green">Confirmé</div>
+        </div>
+        <div class="phone-row">
+          <div class="phone-icon">👨‍⚕️</div>
+          <div>
+            <div class="phone-text-title">Dr. Amadou Diallo</div>
+            <div class="phone-text-sub">Cardiologue · Disponible</div>
+          </div>
+          <div class="phone-tag tag-green">Libre</div>
+        </div>
+        <div class="phone-row">
+          <div class="phone-icon">⏰</div>
+          <div>
+            <div class="phone-text-title">C.S. Pikine</div>
+            <div class="phone-text-sub">Pédiatrie · Forte demande</div>
+          </div>
+          <div class="phone-tag tag-amber">Chargé</div>
+        </div>
+        <div class="phone-row" style="background: rgba(0,229,160,.06); border-color: rgba(0,229,160,.2);">
+          <div class="phone-icon">🔑</div>
+          <div>
+            <div class="phone-text-title">Code confirmation</div>
+            <div class="phone-text-sub" style="color: var(--green); font-weight: 500; font-size: .85rem; letter-spacing: 2px;">482 751</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PROFILS ══ -->
+<section class="profiles" id="profils">
+  <div class="section-tag reveal">Pour qui ?</div>
+  <h2 class="section-title reveal">Une plateforme,<br /><em>trois espaces.</em></h2>
+  <p class="section-sub reveal">Chaque acteur du système de santé dispose d'un espace dédié à ses besoins.</p>
+
+  <div class="profiles-grid">
+    <div class="profile-card reveal">
+      <div class="profile-avatar av-patient">🧑‍🤝‍🧑</div>
+      <div class="profile-role">Espace patient</div>
+      <div class="profile-title">Accédez aux soins facilement</div>
+      <ul class="profile-features">
+        <li>Réservation en ligne 24h/24</li>
+        <li>Choix de la structure et du médecin</li>
+        <li>Confirmation par SMS</li>
+        <li>Historique de vos consultations</li>
+        <li>Suivi de votre dossier</li>
+      </ul>
+    </div>
+    <div class="profile-card reveal">
+      <div class="profile-avatar av-medecin">👨‍⚕️</div>
+      <div class="profile-role">Espace médecin</div>
+      <div class="profile-title">Organisez vos consultations</div>
+      <ul class="profile-features">
+        <li>Planning de rendez-vous en temps réel</li>
+        <li>Alertes de surcharge des structures</li>
+        <li>Acceptation de missions temporaires</li>
+        <li>Suivi multi-structures</li>
+        <li>Gestion de votre disponibilité</li>
+      </ul>
+    </div>
+    <div class="profile-card reveal">
+      <div class="profile-avatar av-admin">🖥️</div>
+      <div class="profile-role">Espace administrateur</div>
+      <div class="profile-title">Pilotez les ressources</div>
+      <ul class="profile-features">
+        <li>Tableau de bord centralisé</li>
+        <li>Détection automatique des déséquilibres</li>
+        <li>Redéploiement suggéré des médecins</li>
+        <li>Rapports statistiques exportables</li>
+        <li>Gestion de toutes les structures</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="section-tag reveal" style="text-align:center">Rejoignez-nous</div>
+  <h2 class="section-title reveal">Prêt à améliorer<br /><em>l'accès aux soins ?</em></h2>
+  <p class="section-sub reveal">Rejoignez les patients, médecins et gestionnaires qui font confiance à Sunu Kiray.</p>
+  <div class="cta-btns reveal">
+    <a href="auth.html" class="btn-primary">
+      Créer un compte gratuit
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    <a href="auth.html" class="btn-ghost">Se connecter</a>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-logo">Sunu <span>Kiray</span></div>
+  <div class="footer-copy">© 2025-2026 · DIC 1 / DGI / ESP / UCAD · Dr Mangoné FALL</div>
+  <div class="footer-links">
+    <a href="#">À propos</a>
+    <a href="#">Contact</a>
+    <a href="#">Confidentialité</a>
+  </div>
+</footer>
+
+<script>
+  /* Heure en temps réel */
+  function updateTime() {
+    const now = new Date();
+    document.getElementById('live-time').textContent =
+      now.getHours().toString().padStart(2,'0') + ':' +
+      now.getMinutes().toString().padStart(2,'0');
+  }
+  updateTime();
+  setInterval(updateTime, 30000);
+
+  /* Scroll reveal */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* Simulation charge dynamique */
+  function animateCharge() {
+    const fills = document.querySelectorAll('.charge-fill');
+    fills.forEach(fill => {
+      const base = parseInt(fill.style.width);
+      const variation = (Math.random() - 0.5) * 6;
+      const newVal = Math.min(99, Math.max(10, base + variation));
+      fill.style.width = newVal.toFixed(0) + '%';
+      const pct = fill.closest('.structure-row').querySelector('.charge-pct');
+      pct.textContent = newVal.toFixed(0) + '%';
+    });
+  }
+  setInterval(animateCharge, 4000);
+</script>
+</body>
+</html>

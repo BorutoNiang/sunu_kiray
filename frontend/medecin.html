@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunu Kiray — Espace Médecin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#06100e;--bg2:#0c1f1a;--card:#0e2019;--border:#1e3d32;--border2:#2a5040;
+      --green:#00e5a0;--green2:#00c896;--green-dim:#00e5a015;
+      --amber:#f5a623;--amber-dim:#f5a62315;--red:#ff5c5c;--red-dim:#ff5c5c15;
+      --blue:#4f8fff;--blue-dim:#4f8fff15;
+      --text:#e8f5f0;--muted:#7aa899;
+      --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+    }
+    html,body{height:100%;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;display:flex;}
+
+    /* SIDEBAR */
+    .sidebar{width:220px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+    .sidebar-logo{padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+    .sidebar-logo a{font-family:var(--font-head);font-size:1.2rem;font-weight:800;color:var(--text);text-decoration:none;}
+    .sidebar-logo a span{color:var(--green);}
+    .sidebar-logo .role-badge{font-size:.65rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:.2rem;}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.5rem;color:var(--muted);text-decoration:none;font-size:.875rem;transition:all .2s;cursor:pointer;border-left:2px solid transparent;}
+    .nav-item:hover{color:var(--text);background:var(--green-dim);}
+    .nav-item.active{color:var(--green);background:var(--green-dim);border-left-color:var(--green);}
+    .nav-badge{margin-left:auto;background:var(--amber);color:#000;font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:100px;}
+    .sidebar-footer{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);}
+    .user-row{display:flex;align-items:center;gap:.75rem;}
+    .user-avatar{width:36px;height:36px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--green);flex-shrink:0;}
+    .user-name{font-size:.82rem;font-weight:500;color:var(--text);}
+    .user-role{font-size:.7rem;color:var(--muted);}
+    .dispo-toggle{display:flex;align-items:center;gap:.6rem;margin-top:.75rem;padding:.6rem .8rem;background:var(--green-dim);border:1px solid rgba(0,229,160,.2);border-radius:10px;cursor:pointer;}
+    .dispo-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+    .dispo-label{font-size:.75rem;font-weight:500;color:var(--green);}
+
+    /* MAIN */
+    .main{margin-left:220px;flex:1;display:flex;flex-direction:column;}
+    .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+    .topbar h1{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text);}
+    .topbar p{font-size:.78rem;color:var(--muted);margin-top:.1rem;}
+    .topbar-right{display:flex;align-items:center;gap:.8rem;}
+    .btn-icon{width:36px;height:36px;background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;transition:border-color .2s;position:relative;}
+    .btn-icon:hover{border-color:var(--border2);}
+    .notif-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--amber);border-radius:50%;font-size:.6rem;font-weight:700;color:#000;display:flex;align-items:center;justify-content:center;}
+    .content{padding:2rem;flex:1;}
+
+    /* PAGE TABS */
+    .page-tabs{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:4px;margin-bottom:2rem;width:fit-content;}
+    .page-tab{padding:.55rem 1.3rem;border-radius:10px;font-size:.85rem;font-weight:500;cursor:pointer;color:var(--muted);transition:all .2s;user-select:none;}
+    .page-tab.active{background:var(--bg2);color:var(--text);border:1px solid var(--border);}
+    .page-section{display:none;}
+    .page-section.active{display:block;}
+
+    /* KPI ROW */
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+    .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;}
+    .kpi-icon{font-size:1.3rem;margin-bottom:.6rem;}
+    .kpi-val{font-family:var(--font-head);font-size:1.8rem;font-weight:700;color:var(--text);line-height:1;}
+    .kpi-label{font-size:.75rem;color:var(--muted);margin-top:.3rem;}
+
+    /* PLANNING */
+    .planning-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+    .week-nav{display:flex;align-items:center;gap:.6rem;}
+    .week-label{font-family:var(--font-head);font-size:.95rem;font-weight:700;color:var(--text);}
+    .nav-btn{width:30px;height:30px;background:var(--card);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.75rem;transition:border-color .2s;}
+    .nav-btn:hover{border-color:var(--border2);}
+    .today-btn{font-size:.75rem;font-weight:500;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,229,160,.2);border-radius:8px;padding:.3rem .8rem;cursor:pointer;}
+
+    /* CALENDAR WEEK VIEW */
+    .week-grid{display:grid;grid-template-columns:60px repeat(6,1fr);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+    .wg-head{background:var(--bg2);border-bottom:1px solid var(--border);}
+    .wg-head-empty{background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+    .day-head{padding:.7rem .5rem;text-align:center;border-right:1px solid var(--border);}
+    .day-head:last-child{border-right:none;}
+    .day-name{font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+    .day-num{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text);margin-top:.15rem;}
+    .day-head.today .day-num{color:var(--green);}
+    .day-head.today{background:var(--green-dim);}
+
+    /* TIME SLOTS */
+    .time-col{border-right:1px solid var(--border);}
+    .time-cell{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted);}
+    .time-cell:last-child{border-bottom:none;}
+    .day-col{border-right:1px solid var(--border);position:relative;}
+    .day-col:last-child{border-right:none;}
+    .slot-cell{height:56px;border-bottom:1px solid var(--border);}
+    .slot-cell:last-child{border-bottom:none;}
+
+    /* Events */
+    .event{position:absolute;left:4px;right:4px;border-radius:8px;padding:.35rem .5rem;cursor:pointer;transition:opacity .2s;z-index:2;}
+    .event:hover{opacity:.85;}
+    .event-green{background:var(--green-dim);border:1px solid rgba(0,229,160,.3);}
+    .event-amber{background:var(--amber-dim);border:1px solid rgba(245,166,35,.3);}
+    .event-blue {background:var(--blue-dim); border:1px solid rgba(79,143,255,.3);}
+    .event-red  {background:var(--red-dim);  border:1px solid rgba(255,92,92,.3);}
+    .event-name{font-size:.7rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .event-time{font-size:.62rem;color:var(--muted);margin-top:.1rem;}
+    .event-type{font-size:.6rem;font-weight:600;padding:.1rem .35rem;border-radius:4px;display:inline-block;margin-top:.1rem;}
+    .et-green{background:rgba(0,229,160,.2);color:var(--green);}
+    .et-amber{background:rgba(245,166,35,.2);color:var(--amber);}
+    .et-blue {background:rgba(79,143,255,.2);color:var(--blue);}
+
+    /* PROCHAINS RDV */
+    .rdv-list{display:flex;flex-direction:column;gap:.8rem;margin-top:1.5rem;}
+    .rdv-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;display:flex;align-items:center;gap:1rem;transition:border-color .2s;}
+    .rdv-item:hover{border-color:var(--border2);}
+    .rdv-heure{font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--green);min-width:52px;}
+    .rdv-patient{flex:1;}
+    .rdv-patient-name{font-size:.88rem;font-weight:500;color:var(--text);}
+    .rdv-patient-detail{font-size:.75rem;color:var(--muted);margin-top:.15rem;}
+    .rdv-statut-pill{font-size:.68rem;font-weight:700;padding:.2rem .6rem;border-radius:100px;}
+    .rsp-attente{background:var(--amber-dim);color:var(--amber);}
+    .rsp-confirme{background:var(--green-dim);color:var(--green);}
+    .rsp-encours{background:var(--blue-dim);color:var(--blue);}
+    .btn-sm{font-size:.75rem;padding:.38rem .8rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--font-body);}
+    .btn-sm:hover{border-color:var(--border2);color:var(--text);}
+    .btn-sm.green{border-color:rgba(0,229,160,.3);color:var(--green);background:var(--green-dim);}
+
+    /* ALERTE REDEPLOI */
+    .mission-alert{background:var(--amber-dim);border:1px solid rgba(245,166,35,.3);border-radius:16px;padding:1.4rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:1rem;}
+    .ma-icon{font-size:1.5rem;flex-shrink:0;}
+    .ma-body{flex:1;}
+    .ma-title{font-family:var(--font-head);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.3rem;}
+    .ma-desc{font-size:.83rem;color:var(--muted);font-weight:300;line-height:1.6;margin-bottom:.8rem;}
+    .ma-detail{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-bottom:.9rem;}
+    .ma-detail span{display:flex;align-items:center;gap:.3rem;}
+    .ma-actions{display:flex;gap:.6rem;}
+    .btn-accept{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,229,160,.3);font-size:.8rem;font-weight:500;padding:.5rem 1.1rem;border-radius:9px;cursor:pointer;transition:opacity .2s;font-family:var(--font-body);}
+    .btn-accept:hover{opacity:.8;}
+    .btn-decline{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,.3);font-size:.8rem;font-weight:500;padding:.5rem 1.1rem;border-radius:9px;cursor:pointer;transition:opacity .2s;font-family:var(--font-body);}
+    .btn-decline:hover{opacity:.8;}
+    .btn-detail-mis{background:var(--bg);color:var(--muted);border:1px solid var(--border);font-size:.8rem;padding:.5rem 1.1rem;border-radius:9px;cursor:pointer;font-family:var(--font-body);}
+
+    /* STATS SECTION */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+    .stat-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;}
+    .stat-panel-title{font-size:.8rem;font-weight:500;color:var(--muted);margin-bottom:1rem;}
+    .stat-bar-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.7rem;}
+    .stat-bar-label{font-size:.78rem;color:var(--text);min-width:100px;}
+    .stat-bar-track{flex:1;height:5px;background:var(--border);border-radius:10px;overflow:hidden;}
+    .stat-bar-fill{height:100%;border-radius:10px;}
+    .stat-bar-val{font-size:.75rem;font-weight:600;color:var(--text);min-width:28px;text-align:right;}
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="index.html">Sunu <span>Kiray</span></a>
+    <div class="role-badge">Espace Médecin</div>
+  </div>
+  <a class="nav-item active" onclick="showPage('planning')"><span>📅</span> Mon planning</a>
+  <a class="nav-item" onclick="showPage('missions')"><span>🔄</span> Missions <span class="nav-badge">2</span></a>
+  <a class="nav-item" onclick="showPage('stats')"><span>📊</span> Mes statistiques</a>
+  <a class="nav-item" onclick="showPage('profil')"><span>👤</span> Mon profil</a>
+  <a class="nav-item" onclick="showPage('disponibilites')"><span>🗓️</span> Mes disponibilités</a>
+  <a class="nav-item" onclick="showPage('notifications')"><span>🔔</span> Notifications</a>
+  <a class="nav-item" onclick="Auth.logout()" style="cursor:pointer"><span>🚪</span> Déconnexion</a>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar">AD</div>
+      <div>
+        <div class="user-name">Dr. Amadou Diallo</div>
+        <div class="user-role">Cardiologue · HPD</div>
+      </div>
+    </div>
+    <div class="dispo-toggle" onclick="toggleDispo(this)">
+      <div class="dispo-dot"></div>
+      <div class="dispo-label" id="dispo-label">Disponible</div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="topbar-title">Mon planning</h1>
+      <p id="topbar-sub">Semaine du 13 au 18 avril 2026</p>
+    </div>
+    <div class="topbar-right">
+      <div class="btn-icon">🔔<div class="notif-badge">2</div></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="page-tabs">
+      <div class="page-tab active" onclick="showPage('planning')">📅 Planning</div>
+      <div class="page-tab" onclick="showPage('missions')">🔄 Missions (2)</div>
+      <div class="page-tab" onclick="showPage('stats')">📊 Statistiques</div>
+    </div>
+
+    <!-- PAGE PLANNING -->
+    <div class="page-section active" id="page-planning">
+
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-icon">📅</div><div class="kpi-val" id="kpi-rdv-today">—</div><div class="kpi-label">RDV aujourd'hui</div></div>
+        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-val" id="kpi-rdv-termines">—</div><div class="kpi-label">Terminés</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⏳</div><div class="kpi-val" id="kpi-rdv-confirmes">—</div><div class="kpi-label">À venir (7j)</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⭐</div><div class="kpi-val">—</div><div class="kpi-label">Note patients</div></div>
+      </div>
+
+      <div class="planning-header">
+        <div class="week-nav">
+          <div class="nav-btn" onclick="weekNav(-1)">‹</div>
+          <div class="week-label" id="week-label">Chargement…</div>
+          <div class="nav-btn" onclick="weekNav(+1)">›</div>
+        </div>
+        <div class="today-btn" onclick="goToday()">Aujourd'hui</div>
+      </div>
+
+      <!-- Calendrier dynamique -->
+      <div id="week-calendar" style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+        <div style="color:var(--muted);padding:2rem;text-align:center">Chargement du planning…</div>
+      </div>
+
+      <!-- Liste RDV à venir -->
+      <div style="margin-top:1.5rem">
+        <div id="rdv-list-title" style="font-family:var(--font-head);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:1rem">Prochains RDV</div>
+        <div class="rdv-list" id="rdv-list-planning">
+          <div style="color:var(--muted);font-size:.85rem">Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE MISSIONS -->
+    <div class="page-section" id="page-missions">
+      <div class="mission-alert">
+        <div class="ma-icon">🚨</div>
+        <div class="ma-body">
+          <div class="ma-title">Mission temporaire proposée — C.S. Pikine</div>
+          <div class="ma-desc">Le Centre de Santé de Pikine fait face à une surcharge en Pédiatrie (62% de capacité, 1 médecin pour 2 requis). Votre disponibilité a été détectée. Pouvez-vous effectuer une mission de 2 jours ?</div>
+          <div class="ma-detail">
+            <span>📍 Thiès → Pikine (45 km)</span>
+            <span>📅 15 – 16 Avril 2026</span>
+            <span>👶 Service Pédiatrie</span>
+            <span>⏱ 2 jours · ~8 consultations/jour</span>
+          </div>
+          <div class="ma-actions">
+            <button class="btn-accept" onclick="this.closest('.mission-alert').style.opacity='.35';this.disabled=true;">✓ Accepter la mission</button>
+            <button class="btn-decline" onclick="this.closest('.mission-alert').style.opacity='.35';this.disabled=true;">✗ Décliner</button>
+            <button class="btn-detail-mis">Voir les détails</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mission-alert" style="border-color:rgba(79,143,255,.3);background:var(--blue-dim);">
+        <div class="ma-icon">📋</div>
+        <div class="ma-body">
+          <div class="ma-title">Mission en cours — Hôpital Le Dantec</div>
+          <div class="ma-desc">Vous effectuez actuellement une mission de renfort en Médecine générale au Dantec. Mission initiée par l'administration le 10 avril.</div>
+          <div class="ma-detail">
+            <span>📍 HPD → Le Dantec</span>
+            <span>📅 10 – 14 Avril 2026</span>
+            <span>🩺 Médecine générale</span>
+            <span>✅ 32 patients vus</span>
+          </div>
+          <div class="ma-actions">
+            <button class="btn-detail-mis">Rapport de mission</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE STATS -->
+    <div class="page-section" id="page-stats">
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-icon">🩺</div><div class="kpi-val" id="stat-consultations">—</div><div class="kpi-label">Consultations (60j)</div></div>
+        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-val" id="stat-termines">—</div><div class="kpi-label">Consultations terminées</div></div>
+        <div class="kpi-card"><div class="kpi-icon">❌</div><div class="kpi-val" id="stat-annules">—</div><div class="kpi-label">Annulations</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⏳</div><div class="kpi-val" id="stat-attente">—</div><div class="kpi-label">En attente</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-panel">
+          <div class="stat-panel-title">Consultations par service</div>
+          <div id="stats-par-service"><div style="color:var(--muted);font-size:.82rem">Chargement…</div></div>
+        </div>
+        <div class="stat-panel">
+          <div class="stat-panel-title">Taux de présence patients</div>
+          <div id="stats-presence"><div style="color:var(--muted);font-size:.82rem">Chargement…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE DISPONIBILITÉS -->
+    <div class="page-section" id="page-disponibilites">
+      <div style="max-width:700px">
+
+        <!-- Formulaire ajout -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem">
+          <div style="font-family:var(--font-head);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:1.2rem">➕ Ajouter un créneau récurrent</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+            <div>
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem">Jour de la semaine</label>
+              <select id="h-jour" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;font-size:.88rem">
+                <option value="0">Lundi</option><option value="1">Mardi</option>
+                <option value="2">Mercredi</option><option value="3">Jeudi</option>
+                <option value="4">Vendredi</option><option value="5">Samedi</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem">Service</label>
+              <select id="h-service" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;font-size:.88rem">
+                <option value="">Chargement…</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem">Heure début</label>
+              <input type="time" id="h-debut" value="08:00" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;font-size:.88rem">
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem">Heure fin</label>
+              <input type="time" id="h-fin" value="12:00" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;font-size:.88rem">
+            </div>
+            <div>
+              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:.3rem">Nb patients max</label>
+              <input type="number" id="h-slots" value="10" min="1" max="30" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.65rem .8rem;font-size:.88rem">
+            </div>
+          </div>
+          <button onclick="ajouterHoraire()" style="background:var(--green);color:var(--bg);border:none;border-radius:10px;padding:.75rem 1.5rem;font-size:.88rem;font-weight:500;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            ✓ Ajouter ce créneau
+          </button>
+          <span id="h-feedback" style="font-size:.82rem;margin-left:1rem;color:var(--muted)"></span>
+        </div>
+
+        <!-- Liste des horaires -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:1.2rem">📅 Mes horaires hebdomadaires</div>
+          <div id="horaires-list"><div style="color:var(--muted);font-size:.85rem">Chargement…</div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE PROFIL -->
+    <div class="page-section" id="page-profil">
+      <div style="max-width:560px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem">
+            <div id="med-profil-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--green-dim);border:2px solid rgba(0,229,160,.3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--green);flex-shrink:0"></div>
+            <div>
+              <div id="med-profil-nom" style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text)">—</div>
+              <div id="med-profil-spec" style="font-size:.78rem;color:var(--muted);margin-top:.2rem">—</div>
+            </div>
+          </div>
+          <div id="med-profil-infos" style="display:flex;flex-direction:column;gap:.7rem;font-size:.88rem"></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:.5rem">Disponibilité</div>
+          <div style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Votre statut est synchronisé en temps réel via le bouton dans la sidebar.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-top:1rem">
+          <div style="font-family:var(--font-head);font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:1rem">Modifier mes informations</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Prénom</label>
+              <input id="med-edit-prenom" type="text" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Nom</label>
+              <input id="med-edit-nom" type="text" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Téléphone</label>
+              <input id="med-edit-tel" type="tel" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Ville</label>
+              <input id="med-edit-ville" type="text" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+          </div>
+          <button onclick="sauvegarderProfilMed()" style="background:var(--green);color:var(--bg);border:none;border-radius:10px;padding:.7rem 1.5rem;font-size:.85rem;font-weight:500;cursor:pointer">✓ Sauvegarder</button>
+          <span id="med-profil-feedback" style="font-size:.82rem;margin-left:1rem;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE NOTIFICATIONS -->
+    <div class="page-section" id="page-notifications">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:600px">
+        <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1.5rem">🔔 Mes notifications</div>
+        <div id="med-notif-list" style="display:flex;flex-direction:column;gap:.6rem">
+          <div style="color:var(--muted);font-size:.85rem">Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  requireLogin('medecin');
+
+  // Afficher le nom du médecin connecté
+  const me = getUser();
+  if (me) {
+    document.querySelector('.user-name').textContent = me.prenom + ' ' + me.nom;
+    document.querySelector('.user-role').textContent = (me.specialite || 'Médecin') + ' · ' + (me.structure_nom || '');
+    const initials = (me.prenom[0] + me.nom[0]).toUpperCase();
+    document.querySelector('.user-avatar').textContent = initials;
+  }
+
+  function showPage(p) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + p).classList.add('active');
+    const map = { planning:0, missions:1, stats:2, profil:3, disponibilites:4, notifications:5 };
+    document.querySelectorAll('.page-tab').forEach((t,i) => t.classList.toggle('active', i === (map[p] ?? -1)));
+    document.querySelectorAll('.nav-item').forEach((n,i) => n.classList.toggle('active', i === (map[p] ?? -1)));
+    const titles = { planning:'Mon planning', missions:'Missions de redéploiement', stats:'Mes statistiques', profil:'Mon profil', disponibilites:'Mes disponibilités', notifications:'Notifications' };
+    document.getElementById('topbar-title').textContent = titles[p] || p;
+    if (p === 'planning')       loadPlanning();
+    if (p === 'missions')       loadMissions();
+    if (p === 'stats')          loadStats();
+    if (p === 'profil')         loadMedProfil();
+    if (p === 'disponibilites') loadDisponibilites();
+    if (p === 'notifications')  loadMedNotifications();
+  }
+
+  // ── Planning ──────────────────────────────────────────────
+  // ── PLANNING DYNAMIQUE ───────────────────────────────
+  const JOURS_COURT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const MOIS_COURT  = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  let weekOffset = 0; // 0 = semaine courante
+
+  function getLundi(offset = 0) {
+    const d = new Date();
+    const day = d.getDay(); // 0=dim
+    const diff = (day === 0 ? -6 : 1 - day); // aller au lundi
+    d.setDate(d.getDate() + diff + offset * 7);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function toISO(d) { return d.toISOString().split('T')[0]; }
+
+  function weekNav(dir) { weekOffset += dir; loadPlanning(); }
+  function goToday()    { weekOffset = 0;   loadPlanning(); }
+
+  async function loadPlanning() {
+    if (!me?.medecin_id) return;
+    const lundi  = getLundi(weekOffset);
+    const samedi = new Date(lundi); samedi.setDate(lundi.getDate() + 5);
+    const today  = toISO(new Date());
+
+    // Label semaine
+    document.getElementById('week-label').textContent =
+      `${lundi.getDate()} – ${samedi.getDate()} ${MOIS_COURT[samedi.getMonth()]} ${samedi.getFullYear()}`;
+
+    try {
+      const rdvs = await Medecins.planning(me.medecin_id, {
+        date_debut: toISO(lundi),
+        date_fin:   toISO(samedi),
+      });
+
+      // KPIs
+      const rdvToday    = rdvs.filter(r => r.date_rdv === today);
+      const rdvTermines = rdvs.filter(r => r.statut === 'termine');
+      const rdvAVenir   = rdvs.filter(r => r.statut === 'confirme' || r.statut === 'en_cours');
+      document.getElementById('kpi-rdv-today').textContent    = rdvToday.length;
+      document.getElementById('kpi-rdv-termines').textContent = rdvTermines.length;
+      document.getElementById('kpi-rdv-confirmes').textContent= rdvAVenir.length;
+
+      // Construire le calendrier
+      const HEURES = [8,9,10,11,14,15,16,17];
+      const jours  = [];
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(lundi); d.setDate(lundi.getDate() + i);
+        jours.push(d);
+      }
+
+      const statutColor = { confirme:'event-green', en_cours:'event-blue', termine:'event-amber', absent:'event-red', annule_patient:'event-red', annule_medecin:'event-red' };
+
+      // En-tête
+      let html = `<div style="display:grid;grid-template-columns:50px repeat(6,1fr);border-bottom:1px solid var(--border)">
+        <div style="background:var(--bg2)"></div>`;
+      jours.forEach(d => {
+        const iso = toISO(d);
+        const isToday = iso === today;
+        html += `<div style="padding:.6rem .4rem;text-align:center;background:${isToday?'var(--green-dim)':'var(--bg2)'};border-left:1px solid var(--border)">
+          <div style="font-size:.65rem;font-weight:600;color:var(--muted);text-transform:uppercase">${JOURS_COURT[d.getDay()]}</div>
+          <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:${isToday?'var(--green)':'var(--text)'}">${d.getDate()}</div>
+        </div>`;
+      });
+      html += '</div>';
+
+      // Grille heures × jours
+      HEURES.forEach(h => {
+        html += `<div style="display:grid;grid-template-columns:50px repeat(6,1fr);border-bottom:1px solid var(--border)">
+          <div style="padding:.4rem;text-align:center;font-size:.65rem;color:var(--muted);background:var(--bg2);border-right:1px solid var(--border)">${h}h</div>`;
+        jours.forEach(d => {
+          const iso = toISO(d);
+          const rdvCell = rdvs.filter(r => {
+            const hRdv = parseInt(formatHeure(r.heure_rdv).split(':')[0]);
+            return r.date_rdv === iso && hRdv === h;
+          });
+          const isToday = iso === today;
+          html += `<div style="min-height:52px;padding:3px;border-left:1px solid var(--border);background:${isToday?'rgba(0,229,160,.01)':'transparent'};position:relative">`;
+          rdvCell.forEach(r => {
+            const cls = statutColor[r.statut] || 'event-green';
+            const nom = r.patient_nom.split(' ').map((w,i) => i===0 ? w[0]+'.' : w).join(' ');
+            html += `<div class="event ${cls}" style="position:relative;top:0;height:auto;margin-bottom:2px" title="${r.patient_nom} — ${r.service}">
+              <div class="event-name">${nom}</div>
+              <div class="event-time">${formatHeure(r.heure_rdv)}</div>
+              <div class="event-type et-${cls.replace('event-','')}">${r.service?.slice(0,6)}</div>
+            </div>`;
+          });
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+
+      document.getElementById('week-calendar').innerHTML = html;
+
+      // Liste RDV à venir
+      const rdvList  = document.getElementById('rdv-list-planning');
+      const titreEl  = document.getElementById('rdv-list-title');
+      const aVenir   = rdvs.filter(r => r.statut === 'confirme' || r.statut === 'en_cours');
+      titreEl.textContent = rdvToday.length > 0 ? "RDV d'aujourd'hui" : "Prochains RDV cette semaine";
+
+      if (!aVenir.length) {
+        rdvList.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Aucun RDV à venir cette semaine.</div>';
+        return;
+      }
+      const scMap = { confirme:'rsp-confirme', en_cours:'rsp-encours' };
+      const slMap = { confirme:'Confirmé', en_cours:'En cours' };
+      rdvList.innerHTML = aVenir.map(r => {
+        const dateStr = r.date_rdv === today ? "Aujourd'hui" :
+          new Date(r.date_rdv+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+        return `<div class="rdv-item">
+          <div class="rdv-heure" style="min-width:80px">
+            <div>${formatHeure(r.heure_rdv)}</div>
+            <div style="font-size:.65rem;color:var(--muted)">${dateStr}</div>
+          </div>
+          <div class="rdv-patient">
+            <div class="rdv-patient-name">${r.patient_nom}</div>
+            <div class="rdv-patient-detail">${r.service} · ${r.structure}</div>
+          </div>
+          <div class="rdv-statut-pill ${scMap[r.statut]||'rsp-attente'}">${slMap[r.statut]||r.statut}</div>
+          ${r.statut==='confirme' ? `<button class="btn-sm green" onclick="demarrerRdv(${r.id},this)">▶ Démarrer</button>` : ''}
+          ${r.statut==='en_cours' ? `<button class="btn-sm" style="border-color:rgba(0,229,160,.3);color:var(--green)" onclick="terminerRdv(${r.id},this)">✓ Terminer</button>` : ''}
+          ${r.statut==='confirme' ? `<button class="btn-sm danger" onclick="marquerAbsent(${r.id},this)">✗ Absent</button>` : ''}
+        </div>`;
+      }).join('');
+
+    } catch (err) {
+      document.getElementById('week-calendar').innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`;
+    }
+  }
+
+  async function demarrerRdv(id, btn) {
+    try {
+      await RendezVous.updateStatus(id, 'en_cours');
+      btn.textContent = '▶ En cours'; btn.disabled = true;
+      loadPlanning();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function terminerRdv(id, btn) {
+    const notes = prompt('Notes de consultation (facultatif) :') || '';
+    try {
+      await RendezVous.updateStatus(id, 'termine', notes);
+      btn.textContent = '✓ Terminé'; btn.disabled = true;
+      loadPlanning();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function marquerAbsent(id, btn) {
+    if (!confirm('Marquer ce patient comme absent ?')) return;
+    try {
+      await RendezVous.updateStatus(id, 'absent');
+      btn.closest('.rdv-item').style.opacity = '.4';
+      loadPlanning();
+    } catch (err) { alert(err.message); }
+  }
+
+  // ── Missions ──────────────────────────────────────────────
+  async function loadMissions() {
+    // Les missions sont déjà affichées statiquement dans le HTML
+    // On branche juste les boutons accepter/refuser
+  }
+
+  async function repondreRedeploi(id, statut, btn) {
+    try {
+      await Redeplois.repondre(id, statut);
+      btn.closest('.mission-alert').style.opacity = '.35';
+      btn.disabled = true;
+    } catch (err) { alert(err.message); }
+  }
+
+  // ── Stats ─────────────────────────────────────────────────
+  async function loadStats() {
+    if (!me?.medecin_id) return;
+    try {
+      const dateDebut = new Date(Date.now() - 30*86400000).toISOString().split('T')[0];
+      const dateFin   = new Date(Date.now() + 30*86400000).toISOString().split('T')[0];
+      const rdvs = await Medecins.planning(me.medecin_id, { date_debut: dateDebut, date_fin: dateFin });
+
+      const total    = rdvs.length;
+      const termines = rdvs.filter(r => r.statut === 'termine').length;
+      const annules  = rdvs.filter(r => r.statut === 'annule_patient' || r.statut === 'annule_medecin').length;
+      const attente  = rdvs.filter(r => r.statut === 'en_attente' || r.statut === 'confirme').length;
+
+      document.getElementById('stat-consultations').textContent = total;
+      document.getElementById('stat-termines').textContent      = termines;
+      document.getElementById('stat-annules').textContent       = annules;
+      document.getElementById('stat-attente').textContent       = attente;
+
+      // Stats par service
+      const byService = {};
+      rdvs.forEach(r => { byService[r.service] = (byService[r.service] || 0) + 1; });
+      const maxVal = Math.max(...Object.values(byService), 1);
+      const colors = ['var(--green)','var(--amber)','var(--blue)','var(--red)'];
+      document.getElementById('stats-par-service').innerHTML = Object.entries(byService)
+        .sort((a,b) => b[1]-a[1])
+        .map(([svc, nb], i) => `
+          <div class="stat-bar-row">
+            <div class="stat-bar-label">${svc}</div>
+            <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${Math.round(nb/maxVal*100)}%;background:${colors[i%colors.length]}"></div></div>
+            <div class="stat-bar-val">${nb}</div>
+          </div>`).join('') || '<div style="color:var(--muted);font-size:.82rem">Aucune donnée.</div>';
+
+      // Taux de présence
+      const presents = termines;
+      const absents  = rdvs.filter(r => r.statut === 'absent').length;
+      const totalFini = presents + annules + absents || 1;
+      const rows = [
+        ['Présents',  presents, Math.round(presents/totalFini*100), 'var(--green)'],
+        ['Annulés',   annules,  Math.round(annules/totalFini*100),  'var(--amber)'],
+        ['Absents',   absents,  Math.round(absents/totalFini*100),  'var(--red)'],
+      ];
+      document.getElementById('stats-presence').innerHTML = rows.map(([lbl, nb, pct, col]) => `
+        <div class="stat-bar-row">
+          <div class="stat-bar-label">${lbl}</div>
+          <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="stat-bar-val">${pct}%</div>
+        </div>`).join('');
+    } catch (err) { console.error(err); }
+  }
+
+  // ── Disponibilité ─────────────────────────────────────────
+  let dispoOn = true;
+  async function toggleDispo(el) {
+    dispoOn = !dispoOn;
+    const newDispo = dispoOn ? 'disponible' : 'absent';
+    el.style.background    = dispoOn ? 'var(--green-dim)' : 'var(--red-dim)';
+    el.style.borderColor   = dispoOn ? 'rgba(0,229,160,.2)' : 'rgba(255,92,92,.2)';
+    el.querySelector('.dispo-dot').style.background  = dispoOn ? 'var(--green)' : 'var(--red)';
+    el.querySelector('.dispo-label').style.color     = dispoOn ? 'var(--green)' : 'var(--red)';
+    el.querySelector('.dispo-label').textContent     = dispoOn ? 'Disponible' : 'Indisponible';
+    if (me?.medecin_id) {
+      try { await Medecins.updateDisponibilite(me.medecin_id, newDispo); }
+      catch (err) { console.error(err); }
+    }
+  }
+
+  // Charger le planning au démarrage
+  loadPlanning();
+
+  // ── MES DISPONIBILITÉS ────────────────────────────────
+  const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+  async function loadDisponibilites() {
+    if (!me?.medecin_id) return;
+    // Charger les services de la structure du médecin
+    try {
+      const user = await Auth.me();
+      const struct = await Structures.get(user.structure_id || 1);
+      const sel = document.getElementById('h-service');
+      sel.innerHTML = struct.services.map(s => `<option value="${s.id}">${s.nom}</option>`).join('');
+    } catch (e) {}
+
+    // Charger les horaires existants
+    const el = document.getElementById('horaires-list');
+    try {
+      const horaires = await Medecins.getHoraires(me.medecin_id);
+      if (!horaires.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Aucun horaire configuré. Ajoutez vos créneaux ci-dessus.</div>';
+        return;
+      }
+      // Grouper par jour
+      const byJour = {};
+      horaires.forEach(h => {
+        if (!byJour[h.jour_semaine]) byJour[h.jour_semaine] = [];
+        byJour[h.jour_semaine].push(h);
+      });
+      el.innerHTML = Object.entries(byJour).map(([jour, hs]) => `
+        <div style="margin-bottom:1rem">
+          <div style="font-size:.8rem;font-weight:600;color:var(--green);letter-spacing:.5px;text-transform:uppercase;margin-bottom:.5rem">${JOURS[jour]}</div>
+          ${hs.map(h => `
+            <div style="display:flex;align-items:center;gap:.8rem;padding:.6rem .8rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:.4rem">
+              <span style="font-size:.85rem;color:var(--text);font-weight:500">${String(h.heure_debut).slice(0,5)} – ${String(h.heure_fin).slice(0,5)}</span>
+              <span style="font-size:.78rem;color:var(--muted)">${h.service_nom}</span>
+              <span style="font-size:.72rem;background:var(--green-dim);color:var(--green);padding:.15rem .5rem;border-radius:100px;margin-left:auto">${h.nb_slots} patients</span>
+              <button onclick="supprimerHoraire(${h.id})" style="background:var(--red-dim);color:var(--red);border:1px solid rgba(255,92,92,.3);border-radius:8px;padding:.25rem .6rem;font-size:.72rem;cursor:pointer">✕</button>
+            </div>`).join('')}
+        </div>`).join('');
+    } catch (err) {
+      el.innerHTML = `<div style="color:var(--red)">${err.message}</div>`;
+    }
+  }
+
+  async function ajouterHoraire() {
+    if (!me?.medecin_id) return;
+    const fb = document.getElementById('h-feedback');
+    const payload = {
+      jour_semaine: parseInt(document.getElementById('h-jour').value),
+      service_id:   parseInt(document.getElementById('h-service').value),
+      heure_debut:  document.getElementById('h-debut').value + ':00',
+      heure_fin:    document.getElementById('h-fin').value + ':00',
+      nb_slots:     parseInt(document.getElementById('h-slots').value),
+    };
+    if (!payload.service_id) { fb.textContent = 'Sélectionnez un service.'; return; }
+    fb.textContent = 'Enregistrement…';
+    try {
+      await Medecins.addHoraire(me.medecin_id, payload);
+      fb.style.color = 'var(--green)';
+      fb.textContent = '✓ Créneau ajouté et disponibilités générées !';
+      loadDisponibilites();
+      setTimeout(() => { fb.textContent = ''; fb.style.color = 'var(--muted)'; }, 3000);
+    } catch (err) {
+      fb.style.color = 'var(--red)';
+      fb.textContent = err.message;
+    }
+  }
+
+  async function supprimerHoraire(horaireId) {
+    if (!confirm('Supprimer ce créneau récurrent ?')) return;
+    try {
+      await Medecins.deleteHoraire(me.medecin_id, horaireId);
+      loadDisponibilites();
+    } catch (err) { alert(err.message); }
+  }
+
+  // ── MON PROFIL ────────────────────────────────────────
+  async function loadMedProfil() {
+    try {
+      const user = await Auth.me();
+      const initials = ((user.prenom||'?')[0] + (user.nom||'?')[0]).toUpperCase();
+      document.getElementById('med-profil-avatar').textContent = initials;
+      document.getElementById('med-profil-nom').textContent = user.prenom + ' ' + user.nom;
+      document.getElementById('med-profil-spec').textContent =
+        (user.specialite || 'Médecin') + ' · ' + (user.structure_nom || '') + ' · ' + (user.grade || '');
+      const fields = [
+        ['✉ Email',       user.email],
+        ['📱 Téléphone',   user.telephone],
+        ['📍 Ville',       user.ville || '—'],
+        ['🩺 Spécialité',  user.specialite || '—'],
+        ['🏥 Structure',   user.structure_nom || '—'],
+        ['🎓 Grade',       user.grade || '—'],
+        ['✅ Disponibilité', user.disponibilite || '—'],
+      ];
+      document.getElementById('med-profil-infos').innerHTML = fields.map(([k,v]) => `
+        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--muted)">${k}</span>
+          <span style="color:var(--text);font-weight:500">${v}</span>
+        </div>`).join('');
+      // Pré-remplir le formulaire
+      document.getElementById('med-edit-prenom').value = user.prenom    || '';
+      document.getElementById('med-edit-nom').value    = user.nom       || '';
+      document.getElementById('med-edit-tel').value    = user.telephone || '';
+      document.getElementById('med-edit-ville').value  = user.ville     || '';
+    } catch (err) {
+      document.getElementById('med-profil-infos').innerHTML = `<div style="color:var(--red)">${err.message}</div>`;
+    }
+  }
+
+  async function sauvegarderProfilMed() {
+    const fb = document.getElementById('med-profil-feedback');
+    const payload = {
+      prenom:    document.getElementById('med-edit-prenom').value.trim(),
+      nom:       document.getElementById('med-edit-nom').value.trim(),
+      telephone: document.getElementById('med-edit-tel').value.trim(),
+      ville:     document.getElementById('med-edit-ville').value.trim(),
+    };
+    fb.style.color = 'var(--muted)'; fb.textContent = 'Sauvegarde…';
+    try {
+      await Auth.updateMe(payload);
+      const u = getUser();
+      if (u) { u.prenom = payload.prenom; u.nom = payload.nom; saveSession(getToken(), u); }
+      fb.style.color = 'var(--green)'; fb.textContent = '✓ Profil mis à jour !';
+      loadMedProfil();
+      setTimeout(() => { fb.textContent = ''; }, 3000);
+    } catch (err) {
+      fb.style.color = 'var(--red)'; fb.textContent = err.message;
+    }
+  }
+
+  // ── NOTIFICATIONS ─────────────────────────────────────
+  async function loadMedNotifications() {
+    const el = document.getElementById('med-notif-list');
+    try {
+      if (!me?.medecin_id) { el.innerHTML = '<div style="color:var(--muted)">Aucune notification.</div>'; return; }
+      const rdvs = await Medecins.planning(me.medecin_id, {
+        date_debut: new Date(Date.now() - 7*86400000).toISOString().split('T')[0],
+        date_fin:   new Date(Date.now() + 30*86400000).toISOString().split('T')[0],
+      });
+      if (!rdvs.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Aucun rendez-vous récent.</div>'; return; }
+      const icons = { confirme:'✅', en_attente:'⏳', termine:'🏁', en_cours:'🔵', annule_patient:'❌', annule_medecin:'❌' };
+      const labels = { confirme:'Confirmé', en_attente:'En attente', termine:'Terminé', en_cours:'En cours', annule_patient:'Annulé', annule_medecin:'Annulé' };
+      el.innerHTML = rdvs.slice(0,15).map(r => `
+        <div style="display:flex;align-items:flex-start;gap:.8rem;padding:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px">
+          <div style="font-size:1.2rem;flex-shrink:0">${icons[r.statut] || '📋'}</div>
+          <div style="flex:1">
+            <div style="font-size:.85rem;font-weight:500;color:var(--text)">${r.patient_nom} — ${r.service}</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">${r.structure} · ${new Date(r.date_rdv).toLocaleDateString('fr-FR')} à ${String(r.heure_rdv).slice(0,5)}</div>
+            <div style="font-size:.72rem;margin-top:.2rem;color:${r.statut==='confirme'?'var(--green)':r.statut==='en_attente'?'var(--amber)':'var(--muted)'}">${labels[r.statut]||r.statut}</div>
+          </div>
+        </div>`).join('');
+    } catch (err) {
+      el.innerHTML = `<div style="color:var(--red)">${err.message}</div>`;
+    }
+  }
+</script>
+</body>
+</html>

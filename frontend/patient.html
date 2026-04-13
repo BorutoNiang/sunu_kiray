@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunu Kiray — Espace Patient</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#06100e;--bg2:#0c1f1a;--card:#0e2019;--border:#1e3d32;--border2:#2a5040;
+      --green:#00e5a0;--green2:#00c896;--green-dim:#00e5a015;
+      --amber:#f5a623;--amber-dim:#f5a62315;--red:#ff5c5c;--red-dim:#ff5c5c15;
+      --text:#e8f5f0;--muted:#7aa899;
+      --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+    }
+    html,body{height:100%;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;display:flex;}
+
+    /* SIDEBAR */
+    .sidebar{width:220px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+    .sidebar-logo{padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+    .sidebar-logo a{font-family:var(--font-head);font-size:1.2rem;font-weight:800;color:var(--text);text-decoration:none;}
+    .sidebar-logo a span{color:var(--green);}
+    .sidebar-logo .role-badge{font-size:.65rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:.2rem;}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.5rem;color:var(--muted);text-decoration:none;font-size:.875rem;transition:all .2s;cursor:pointer;border-left:2px solid transparent;}
+    .nav-item:hover{color:var(--text);background:var(--green-dim);}
+    .nav-item.active{color:var(--green);background:var(--green-dim);border-left-color:var(--green);}
+    .sidebar-footer{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);}
+    .user-row{display:flex;align-items:center;gap:.75rem;}
+    .user-avatar{width:34px;height:34px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--green);flex-shrink:0;}
+    .user-name{font-size:.82rem;font-weight:500;color:var(--text);}
+    .user-role{font-size:.7rem;color:var(--muted);}
+
+    /* MAIN */
+    .main{margin-left:220px;flex:1;display:flex;flex-direction:column;}
+    .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+    .topbar h1{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text);}
+    .topbar p{font-size:.78rem;color:var(--muted);margin-top:.1rem;}
+    .content{padding:2rem;flex:1;}
+
+    /* TABS NAVIGATION */
+    .page-tabs{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:4px;margin-bottom:2rem;width:fit-content;}
+    .page-tab{padding:.55rem 1.3rem;border-radius:10px;font-size:.85rem;font-weight:500;cursor:pointer;color:var(--muted);transition:all .2s;user-select:none;}
+    .page-tab.active{background:var(--bg2);color:var(--text);border:1px solid var(--border);}
+
+    /* PAGE SECTIONS */
+    .page-section{display:none;}
+    .page-section.active{display:block;}
+
+    /* ── PRISE DE RDV ── */
+    .rdv-wizard{max-width:800px;}
+    .wizard-steps{display:flex;align-items:center;gap:.5rem;margin-bottom:2rem;}
+    .wstep{display:flex;align-items:center;gap:.5rem;cursor:pointer;}
+    .wstep-num{width:30px;height:30px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);transition:all .2s;flex-shrink:0;}
+    .wstep.active .wstep-num{background:var(--green);border-color:var(--green);color:var(--bg);}
+    .wstep.done .wstep-num{background:var(--green-dim);border-color:rgba(0,229,160,.3);color:var(--green);}
+    .wstep-label{font-size:.78rem;color:var(--muted);}
+    .wstep.active .wstep-label{color:var(--text);}
+    .wline{flex:1;height:1px;background:var(--border);}
+    .wline.done{background:rgba(0,229,160,.3);}
+
+    .wizard-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;}
+    .wizard-title{font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:.4rem;}
+    .wizard-sub{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem;font-weight:300;}
+
+    /* Structure cards */
+    .struct-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem;}
+    .struct-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.2rem;cursor:pointer;transition:all .25s;position:relative;}
+    .struct-card:hover{border-color:var(--border2);}
+    .struct-card.selected{border-color:var(--green);background:var(--green-dim);}
+    .struct-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.8rem;}
+    .struct-card-name{font-size:.9rem;font-weight:500;color:var(--text);}
+    .struct-card-loc{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
+    .struct-charge-pill{font-size:.65rem;font-weight:700;padding:.2rem .55rem;border-radius:100px;}
+    .struct-card-services{font-size:.72rem;color:var(--muted);margin-bottom:.8rem;}
+    .struct-mini-bar{height:4px;background:var(--border);border-radius:10px;overflow:hidden;}
+    .struct-mini-fill{height:100%;border-radius:10px;}
+    .check-mark{position:absolute;top:1rem;right:1rem;width:20px;height:20px;border-radius:50%;background:var(--green);display:none;align-items:center;justify-content:center;font-size:.65rem;color:var(--bg);}
+    .struct-card.selected .check-mark{display:flex;}
+
+    /* Service chips */
+    .service-grid{display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:1.5rem;}
+    .service-chip{padding:.6rem 1.1rem;background:var(--bg2);border:1px solid var(--border);border-radius:100px;font-size:.82rem;cursor:pointer;transition:all .2s;color:var(--muted);}
+    .service-chip:hover{border-color:var(--border2);color:var(--text);}
+    .service-chip.selected{background:var(--green-dim);border-color:rgba(0,229,160,.4);color:var(--green);}
+
+    /* Calendrier */
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem;margin-bottom:1.5rem;}
+    .cal-head{text-align:center;font-size:.7rem;font-weight:600;color:var(--muted);padding:.4rem 0;letter-spacing:.5px;}
+    .cal-day{text-align:center;padding:.55rem .3rem;border-radius:10px;font-size:.82rem;cursor:pointer;border:1px solid transparent;transition:all .2s;color:var(--muted);}
+    .cal-day:hover{background:var(--bg2);color:var(--text);}
+    .cal-day.today{border-color:var(--border2);color:var(--text);}
+    .cal-day.selected{background:var(--green);color:var(--bg);font-weight:700;border-color:var(--green);}
+    .cal-day.disabled{opacity:.25;cursor:not-allowed;pointer-events:none;}
+    .cal-day.has-slot::after{content:'';display:block;width:4px;height:4px;border-radius:50%;background:var(--green);margin:.2rem auto 0;}
+    .cal-month{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+    .cal-month-label{font-size:.9rem;font-weight:600;color:var(--text);}
+    .cal-nav{width:28px;height:28px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.75rem;transition:border-color .2s;}
+    .cal-nav:hover{border-color:var(--border2);}
+
+    /* Créneaux */
+    .slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.5rem;}
+    .slot{padding:.55rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;text-align:center;font-size:.8rem;cursor:pointer;transition:all .2s;color:var(--muted);}
+    .slot:hover{border-color:var(--border2);color:var(--text);}
+    .slot.selected{background:var(--green-dim);border-color:rgba(0,229,160,.4);color:var(--green);font-weight:500;}
+    .slot.full{opacity:.3;cursor:not-allowed;pointer-events:none;text-decoration:line-through;}
+
+    /* Récap RDV */
+    .recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1.5rem;}
+    .recap-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;}
+    .recap-label{font-size:.7rem;color:var(--muted);margin-bottom:.25rem;}
+    .recap-val{font-size:.88rem;font-weight:500;color:var(--text);}
+
+    /* Motif */
+    textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;color:var(--text);font-family:var(--font-body);font-size:.88rem;outline:none;resize:vertical;min-height:80px;transition:border-color .2s;margin-bottom:1.2rem;}
+    textarea:focus{border-color:var(--green);}
+    textarea::placeholder{color:var(--muted);opacity:.6;}
+
+    /* Confirmation */
+    .confirm-box{text-align:center;padding:2rem 1rem;}
+    .confirm-code{font-family:var(--font-head);font-size:2.5rem;font-weight:800;color:var(--green);letter-spacing:6px;margin:1rem 0;}
+    .confirm-sub{font-size:.85rem;color:var(--muted);font-weight:300;max-width:320px;margin:0 auto;}
+
+    /* Buttons */
+    .wizard-actions{display:flex;gap:.8rem;margin-top:1.5rem;}
+    .btn-primary{display:flex;align-items:center;justify-content:center;gap:.5rem;background:var(--green);color:var(--bg);font-family:var(--font-body);font-size:.88rem;font-weight:500;padding:.75rem 1.5rem;border:none;border-radius:10px;cursor:pointer;transition:all .2s;flex:1;}
+    .btn-primary:hover{background:var(--green2);transform:translateY(-1px);}
+    .btn-back{background:var(--bg2);color:var(--muted);border:1px solid var(--border);font-family:var(--font-body);font-size:.85rem;padding:.75rem 1.2rem;border-radius:10px;cursor:pointer;transition:all .2s;}
+    .btn-back:hover{border-color:var(--border2);color:var(--text);}
+
+    /* ── MES RDV ── */
+    .rdv-list{display:flex;flex-direction:column;gap:1rem;}
+    .rdv-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.4rem;display:flex;align-items:center;gap:1.2rem;transition:border-color .2s;}
+    .rdv-card:hover{border-color:var(--border2);}
+    .rdv-date-box{background:var(--green-dim);border:1px solid rgba(0,229,160,.2);border-radius:12px;padding:.7rem 1rem;text-align:center;min-width:64px;flex-shrink:0;}
+    .rdv-day{font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--green);line-height:1;}
+    .rdv-month{font-size:.65rem;font-weight:500;color:var(--green);opacity:.7;text-transform:uppercase;}
+    .rdv-info{flex:1;}
+    .rdv-service{font-size:.9rem;font-weight:500;color:var(--text);}
+    .rdv-detail{font-size:.78rem;color:var(--muted);margin-top:.25rem;}
+    .rdv-code{font-size:.78rem;font-weight:600;color:var(--green);margin-top:.3rem;letter-spacing:1px;}
+    .rdv-statut{font-size:.72rem;font-weight:700;padding:.22rem .65rem;border-radius:100px;}
+    .st-confirme{background:var(--green-dim);color:var(--green);}
+    .st-attente {background:var(--amber-dim);color:var(--amber);}
+    .st-termine {background:var(--border);color:var(--muted);}
+    .rdv-actions{display:flex;flex-direction:column;gap:.4rem;align-items:flex-end;}
+    .btn-xs{font-size:.72rem;padding:.3rem .7rem;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--font-body);}
+    .btn-xs:hover{border-color:var(--border2);color:var(--text);}
+    .btn-xs.danger:hover{border-color:var(--red);color:var(--red);}
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="index.html">Sunu <span>Kiray</span></a>
+    <div class="role-badge">Espace Patient</div>
+  </div>
+  <a class="nav-item active" onclick="showPage('rdv')"><span>📅</span> Prendre RDV</a>
+  <a class="nav-item" onclick="showPage('mesrdv')"><span>📋</span> Mes rendez-vous</a>
+  <a class="nav-item" onclick="showPage('profil')"><span>👤</span> Mon profil</a>
+  <a class="nav-item" onclick="showPage('dossier')"><span>📂</span> Mon dossier</a>
+  <a class="nav-item" onclick="showPage('notifications')"><span>🔔</span> Notifications</a>
+  <a class="nav-item" onclick="Auth.logout()" style="cursor:pointer"><span>🚪</span> Déconnexion</a>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar">MS</div>
+      <div><div class="user-name">Mariama Sarr</div><div class="user-role">Patient · Dakar</div></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="topbar-title">Prendre un rendez-vous</h1>
+      <p id="topbar-sub">Choisissez votre structure, service et créneau</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="page-tabs">
+      <div class="page-tab active" onclick="showPage('rdv')">📅 Nouveau RDV</div>
+      <div class="page-tab" onclick="showPage('mesrdv')">📋 Mes RDV (3)</div>
+    </div>
+
+    <!-- PAGE: PRISE DE RDV -->
+    <div class="page-section active" id="page-rdv">
+      <div class="rdv-wizard">
+
+        <!-- Steps -->
+        <div class="wizard-steps">
+          <div class="wstep active" id="ws1"><div class="wstep-num">1</div><div class="wstep-label">Structure</div></div>
+          <div class="wline" id="wl1"></div>
+          <div class="wstep" id="ws2"><div class="wstep-num">2</div><div class="wstep-label">Service</div></div>
+          <div class="wline" id="wl2"></div>
+          <div class="wstep" id="ws3"><div class="wstep-num">3</div><div class="wstep-label">Créneau</div></div>
+          <div class="wline" id="wl3"></div>
+          <div class="wstep" id="ws4"><div class="wstep-num">4</div><div class="wstep-label">Confirmation</div></div>
+        </div>
+
+        <!-- STEP 1 : Structure -->
+        <div id="step-1" class="wizard-panel">
+          <div class="wizard-title">Choisissez une structure de santé</div>
+          <div class="wizard-sub">Sélectionnez l'hôpital ou le centre de santé souhaité</div>
+          <div class="struct-grid">
+            <div class="struct-card" onclick="selectStruct(this,1,'Hôpital Principal de Dakar')">
+              <div class="check-mark">✓</div>
+              <div class="struct-card-top">
+                <div><div class="struct-card-name">Hôpital Principal de Dakar</div><div class="struct-card-loc">📍 Dakar</div></div>
+                <div class="struct-charge-pill" style="background:var(--red-dim);color:var(--red)">88%</div>
+              </div>
+              <div class="struct-card-services">Médecine générale · Cardiologie · Pédiatrie · Urgences</div>
+              <div class="struct-mini-bar"><div class="struct-mini-fill" style="width:88%;background:var(--red)"></div></div>
+            </div>
+            <div class="struct-card" onclick="selectStruct(this,2,'Hôpital Le Dantec')">
+              <div class="check-mark">✓</div>
+              <div class="struct-card-top">
+                <div><div class="struct-card-name">Hôpital Le Dantec</div><div class="struct-card-loc">📍 Dakar</div></div>
+                <div class="struct-charge-pill" style="background:var(--amber-dim);color:var(--amber)">71%</div>
+              </div>
+              <div class="struct-card-services">Médecine générale · Dermatologie · Ophtalmologie</div>
+              <div class="struct-mini-bar"><div class="struct-mini-fill" style="width:71%;background:var(--amber)"></div></div>
+            </div>
+            <div class="struct-card" onclick="selectStruct(this,3,'Centre de Santé de Pikine')">
+              <div class="check-mark">✓</div>
+              <div class="struct-card-top">
+                <div><div class="struct-card-name">Centre de Santé de Pikine</div><div class="struct-card-loc">📍 Pikine</div></div>
+                <div class="struct-charge-pill" style="background:var(--amber-dim);color:var(--amber)">62%</div>
+              </div>
+              <div class="struct-card-services">Médecine générale · Pédiatrie</div>
+              <div class="struct-mini-bar"><div class="struct-mini-fill" style="width:62%;background:var(--amber)"></div></div>
+            </div>
+            <div class="struct-card" onclick="selectStruct(this,4,'Hôpital Régional de Thiès')">
+              <div class="check-mark">✓</div>
+              <div class="struct-card-top">
+                <div><div class="struct-card-name">Hôpital Régional de Thiès</div><div class="struct-card-loc">📍 Thiès</div></div>
+                <div class="struct-charge-pill" style="background:var(--green-dim);color:var(--green)">34%</div>
+              </div>
+              <div class="struct-card-services">Médecine générale · Chirurgie générale</div>
+              <div class="struct-mini-bar"><div class="struct-mini-fill" style="width:34%;background:var(--green)"></div></div>
+            </div>
+          </div>
+          <div class="wizard-actions">
+            <button class="btn-primary" onclick="allerEtape2()">Choisir une structure →</button>
+          </div>
+        </div>
+
+        <!-- STEP 2 : Service + médecin -->
+        <div id="step-2" class="wizard-panel" style="display:none">
+          <div class="wizard-title">Choisissez un service</div>
+          <div class="wizard-sub">Services disponibles dans la structure sélectionnée</div>
+          <div class="service-grid">
+            <div class="service-chip" onclick="selectService(this,1,'Médecine générale')">🩺 Médecine générale</div>
+            <div class="service-chip" onclick="selectService(this,2,'Cardiologie')">❤️ Cardiologie</div>
+            <div class="service-chip" onclick="selectService(this,3,'Pédiatrie')">👶 Pédiatrie</div>
+            <div class="service-chip" onclick="selectService(this,4,'Urgences')">🚑 Urgences</div>
+            <div class="service-chip" onclick="selectService(this,6,'Dermatologie')">💊 Dermatologie</div>
+            <div class="service-chip" onclick="selectService(this,7,'Ophtalmologie')">👁 Ophtalmologie</div>
+          </div>
+          <div id="medecin-info" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+            <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem;font-weight:500;">Médecin affecté</div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <div style="width:38px;height:38px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--green);">AD</div>
+              <div><div style="font-size:.88rem;font-weight:500;color:var(--text);">Dr. Amadou Diallo</div><div style="font-size:.72rem;color:var(--muted);">Cardiologue · Disponible</div></div>
+              <div style="margin-left:auto;font-size:.7rem;background:var(--green-dim);color:var(--green);padding:.2rem .6rem;border-radius:100px;font-weight:600;">⭐ 4.8</div>
+            </div>
+          </div>
+          <div class="wizard-actions">
+            <button class="btn-back" onclick="goStep(1)">← Retour</button>
+            <button class="btn-primary" onclick="allerEtape3()">Choisir un créneau →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 : Date + heure -->
+        <div id="step-3" class="wizard-panel" style="display:none">
+          <div class="wizard-title">Choisissez une date et un créneau</div>
+          <div class="wizard-sub">Sélectionnez un jour disponible puis votre heure</div>
+          <div class="cal-month">
+            <div class="cal-month-label" id="cal-month-label">Avril 2026</div>
+            <div style="display:flex;gap:.4rem">
+              <div class="cal-nav" onclick="calNav(-1)">‹</div>
+              <div class="cal-nav" onclick="calNav(+1)">›</div>
+            </div>
+          </div>
+          <div class="cal-grid" id="cal-grid">
+            <div class="cal-head">Lun</div><div class="cal-head">Mar</div><div class="cal-head">Mer</div>
+            <div class="cal-head">Jeu</div><div class="cal-head">Ven</div><div class="cal-head">Sam</div><div class="cal-head">Dim</div>
+          </div>
+          <div id="slots-section" style="display:none">
+            <div style="font-size:.8rem;font-weight:500;color:var(--text);margin-bottom:.7rem;">Créneaux disponibles</div>
+            <div class="slots-grid" id="slots-grid"></div>
+          </div>
+          <div class="wizard-actions">
+            <button class="btn-back" onclick="goStep(2)">← Retour</button>
+            <button class="btn-primary" onclick="goStep(4)">Confirmer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 4 : Confirmation -->
+        <div id="step-4" class="wizard-panel" style="display:none">
+          <div class="wizard-title">Confirmer le rendez-vous</div>
+          <div class="wizard-sub">Vérifiez les détails et ajoutez un motif si nécessaire</div>
+          <div class="recap-grid">
+            <div class="recap-item"><div class="recap-label">Structure</div><div class="recap-val" id="recap-struct">—</div></div>
+            <div class="recap-item"><div class="recap-label">Service</div><div class="recap-val" id="recap-service">—</div></div>
+            <div class="recap-item"><div class="recap-label">Médecin</div><div class="recap-val">Dr. Amadou Diallo</div></div>
+            <div class="recap-item"><div class="recap-label">Date & heure</div><div class="recap-val" id="recap-date">—</div></div>
+          </div>
+          <div style="font-size:.8rem;font-weight:500;color:var(--text);margin-bottom:.5rem;">Motif de consultation (facultatif)</div>
+          <textarea id="motif-input" placeholder="Ex : douleurs thoraciques depuis 3 jours, suivi post-opératoire…"></textarea>
+          <div id="confirm-result" style="display:none;" class="confirm-box">
+            <div style="font-size:3rem;margin-bottom:.5rem;">🎉</div>
+            <div style="font-family:var(--font-head);font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:.3rem;">Rendez-vous confirmé !</div>
+            <div class="confirm-code" id="confirm-code">—</div>
+            <div class="confirm-sub">Votre code de confirmation a été envoyé par SMS. Présentez-le à l'accueil le jour J.</div>
+            <button class="btn-primary" style="max-width:200px;margin:.8rem auto 0;" onclick="showPage('mesrdv')">Voir mes RDV</button>
+          </div>
+          <div id="confirm-form">
+            <div class="wizard-actions">
+              <button class="btn-back" onclick="goStep(3)">← Retour</button>
+              <button class="btn-primary" onclick="confirmerRdv()">✓ Valider le rendez-vous</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAGE: MES RDV -->
+    <div class="page-section" id="page-mesrdv">
+      <div class="rdv-list">
+        <div class="rdv-card">
+          <div class="rdv-date-box"><div class="rdv-day">15</div><div class="rdv-month">Avr</div></div>
+          <div class="rdv-info">
+            <div class="rdv-service">Cardiologie — Dr. Amadou Diallo</div>
+            <div class="rdv-detail">Hôpital Principal de Dakar · 09h30</div>
+            <div class="rdv-code">Code : 482 751</div>
+          </div>
+          <div class="rdv-statut st-confirme">Confirmé</div>
+          <div class="rdv-actions">
+            <button class="btn-xs">Détails</button>
+            <button class="btn-xs danger">Annuler</button>
+          </div>
+        </div>
+        <div class="rdv-card">
+          <div class="rdv-date-box"><div class="rdv-day">22</div><div class="rdv-month">Avr</div></div>
+          <div class="rdv-info">
+            <div class="rdv-service">Pédiatrie — Dr. Aïssatou Badji</div>
+            <div class="rdv-detail">C.S. Pikine · 10h00</div>
+            <div class="rdv-code">Code : 317 089</div>
+          </div>
+          <div class="rdv-statut st-attente">En attente</div>
+          <div class="rdv-actions">
+            <button class="btn-xs">Détails</button>
+            <button class="btn-xs danger">Annuler</button>
+          </div>
+        </div>
+        <div class="rdv-card" style="opacity:.55">
+          <div class="rdv-date-box" style="background:var(--border);border-color:var(--border2)"><div class="rdv-day" style="color:var(--muted)">03</div><div class="rdv-month" style="color:var(--muted)">Avr</div></div>
+          <div class="rdv-info">
+            <div class="rdv-service">Médecine générale — Dr. Fatou Ndiaye</div>
+            <div class="rdv-detail">Hôpital Le Dantec · 08h30</div>
+            <div class="rdv-code" style="color:var(--muted)">Code : 654 320</div>
+          </div>
+          <div class="rdv-statut st-termine">Terminé</div>
+          <div class="rdv-actions">
+            <button class="btn-xs">Compte-rendu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MON PROFIL ══ -->
+    <div class="page-section" id="page-profil">
+      <div style="max-width:560px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem">
+            <div id="profil-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--green-dim);border:2px solid rgba(0,229,160,.3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--green);flex-shrink:0"></div>
+            <div>
+              <div id="profil-nom" style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--text)">—</div>
+              <div id="profil-role" style="font-size:.78rem;color:var(--muted);margin-top:.2rem">Patient</div>
+            </div>
+          </div>
+          <div id="profil-infos" style="display:flex;flex-direction:column;gap:.7rem;font-size:.88rem"></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="font-family:var(--font-head);font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:1rem">Modifier mes informations</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Prénom</label>
+              <input id="edit-prenom" type="text" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Nom</label>
+              <input id="edit-nom" type="text" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Téléphone</label>
+              <input id="edit-tel" type="tel" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+            <div>
+              <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Ville</label>
+              <input id="edit-ville" type="text" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+            </div>
+          </div>
+          <button onclick="sauvegarderProfil()" style="background:var(--green);color:var(--bg);border:none;border-radius:10px;padding:.7rem 1.5rem;font-size:.85rem;font-weight:500;cursor:pointer">✓ Sauvegarder</button>
+          <span id="profil-feedback" style="font-size:.82rem;margin-left:1rem;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MON DOSSIER ══ -->
+    <div class="page-section" id="page-dossier">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:700px">
+        <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1.5rem">📂 Mon dossier médical</div>
+        <div id="dossier-rdv-list" style="display:flex;flex-direction:column;gap:.8rem">
+          <div style="color:var(--muted);font-size:.85rem">Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NOTIFICATIONS ══ -->
+    <div class="page-section" id="page-notifications">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:600px">
+        <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1.5rem">🔔 Mes notifications</div>
+        <div id="notif-list" style="display:flex;flex-direction:column;gap:.6rem">
+          <div style="color:var(--muted);font-size:.85rem">Chargement…</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+  requireLogin('patient');
+
+  // Afficher le nom du patient connecté
+  const me = getUser();
+  if (me) {
+    document.querySelector('.user-name').textContent = me.prenom + ' ' + me.nom;
+    const initials = (me.prenom[0] + me.nom[0]).toUpperCase();
+    document.querySelector('.user-avatar').textContent = initials;
+  }
+
+  // État du wizard
+  let selStructId = null, selStructName = '';
+  let selServiceId = null, selServiceName = '';
+  let selDispoId = null, selDateLabel = '', selHeure = '';
+
+  function showPage(p) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + p).classList.add('active');
+    // Tabs visibles seulement pour rdv/mesrdv
+    const tabPages = ['rdv','mesrdv'];
+    const idx = tabPages.indexOf(p);
+    if (idx >= 0) {
+      document.querySelectorAll('.page-tab')[idx].classList.add('active');
+    }
+    // Nav active
+    const navMap = { rdv:0, mesrdv:1, profil:2, dossier:3, notifications:4 };
+    document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', i === (navMap[p] ?? -1)));
+    // Titres
+    const titles = { rdv:'Prendre un rendez-vous', mesrdv:'Mes rendez-vous', profil:'Mon profil', dossier:'Mon dossier médical', notifications:'Notifications' };
+    document.getElementById('topbar-title').textContent = titles[p] || '';
+    // Charger les données
+    if (p === 'mesrdv')        loadMesRdv();
+    if (p === 'profil')        loadProfil();
+    if (p === 'dossier')       loadDossier();
+    if (p === 'notifications') loadNotifications();
+  }
+
+  function goStep(n) {
+    [1,2,3,4].forEach(i => {
+      const s = document.getElementById('step-' + i);
+      if (s) s.style.display = i === n ? 'block' : 'none';
+    });
+    [1,2,3,4].forEach(i => {
+      const dot = document.getElementById('ws' + i);
+      dot.classList.remove('active', 'done');
+      if (i < n) dot.classList.add('done');
+      else if (i === n) dot.classList.add('active');
+    });
+    [1,2,3].forEach(i => {
+      document.getElementById('wl' + i).classList.toggle('done', i < n);
+    });
+    if (n === 3 && selStructId && selServiceId) loadCreneaux();
+    if (n === 3) renderCal();
+  }
+
+  function selectStruct(el, id, name) {
+    document.querySelectorAll('.struct-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selStructId = id; selStructName = name;
+    document.getElementById('recap-struct').textContent = name;
+  }
+
+  function allerEtape2() {
+    if (!selStructId) {
+      alert('Veuillez sélectionner une structure de santé.');
+      return;
+    }
+    goStep(2);
+  }
+
+  function allerEtape3() {
+    if (!selServiceId) {
+      alert('Veuillez sélectionner un service.');
+      return;
+    }
+    goStep(3);
+  }
+
+  function selectService(el, id, name) {
+    document.querySelectorAll('.service-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selServiceId = id; selServiceName = name;
+    document.getElementById('recap-service').textContent = name;
+    document.getElementById('medecin-info').style.display = 'block';
+  }
+
+  // ── Calendrier dynamique ─────────────────────────────────
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth(); // 0-indexed
+  const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  function renderCal() {
+    const grid = document.getElementById('cal-grid');
+    document.getElementById('cal-month-label').textContent = MOIS[calMonth] + ' ' + calYear;
+    // Garder les en-têtes
+    const heads = Array.from(grid.querySelectorAll('.cal-head'));
+    grid.innerHTML = '';
+    heads.forEach(h => grid.appendChild(h));
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const firstDay = new Date(calYear, calMonth, 1);
+    // Lundi=0 … Dimanche=6
+    let startOffset = (firstDay.getDay() + 6) % 7;
+    for (let i = 0; i < startOffset; i++) {
+      const blank = document.createElement('div');
+      blank.className = 'cal-day disabled';
+      grid.appendChild(blank);
+    }
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(calYear, calMonth, d);
+      const iso  = date.toISOString().split('T')[0];
+      const div  = document.createElement('div');
+      const isPast = date < today;
+      const isToday = date.getTime() === today.getTime();
+      div.className = 'cal-day' + (isPast ? ' disabled' : ' has-slot') + (isToday ? ' today' : '');
+      div.textContent = d;
+      if (!isPast) div.onclick = () => selectDay(div, iso);
+      grid.appendChild(div);
+    }
+  }
+
+  function calNav(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    renderCal();
+  }
+
+  // Initialiser le calendrier quand on arrive à l'étape 3
+  // (intégré directement dans goStep ci-dessus)
+  async function loadCreneaux() {
+    const slotsSection = document.getElementById('slots-section');
+    const slotsGrid    = document.querySelector('.slots-grid');
+    slotsSection.style.display = 'none';
+    slotsGrid.innerHTML = '<div style="color:var(--muted);font-size:.82rem;">Chargement…</div>';
+
+    // Prendre J+1 par défaut
+    const date = selDateLabel || new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    try {
+      const dispos = await RendezVous.disponibilites(selStructId, selServiceId, date);
+      slotsGrid.innerHTML = '';
+      if (!dispos.length) {
+        slotsGrid.innerHTML = '<div style="color:var(--muted);font-size:.82rem;grid-column:1/-1">Aucun créneau disponible ce jour.</div>';
+      } else {
+        dispos.forEach(d => {
+          const full = d.slots_restants <= 0;
+          const heure = d.heure_debut.slice(0,5);
+          slotsGrid.innerHTML += `
+            <div class="slot${full ? ' full' : ''}" onclick="${full ? '' : `selectSlot(this,${d.id},'${heure}','${d.medecin_nom}')`}">
+              ${heure}${full ? '<br><small>Complet</small>' : ''}
+            </div>`;
+        });
+      }
+      slotsSection.style.display = 'block';
+    } catch (err) {
+      slotsGrid.innerHTML = '<div style="color:var(--red);font-size:.82rem;grid-column:1/-1">Erreur de chargement.</div>';
+      slotsSection.style.display = 'block';
+    }
+  }
+
+  function selectDay(el, dateISO) {
+    document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    selDateLabel = dateISO;
+    selDispoId = null; selHeure = '';
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+    loadCreneaux();
+  }
+
+  function selectSlot(el, dispoId, heure, medecinNom) {
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    selDispoId = dispoId; selHeure = heure;
+    document.getElementById('recap-date').textContent = (selDateLabel || '—') + ' à ' + heure;
+    // Mettre à jour le médecin affiché
+    const mInfo = document.getElementById('medecin-info');
+    if (mInfo && medecinNom) {
+      const nameEl = mInfo.querySelector('[style*="font-weight:500"]');
+      if (nameEl) nameEl.textContent = medecinNom;
+    }
+  }
+
+  // ── Confirmer le RDV via l'API ────────────────────────────
+  async function confirmerRdv() {
+    if (!selDispoId) {
+      alert('Veuillez sélectionner un créneau.');
+      return;
+    }
+    const btn = document.querySelector('#confirm-form .btn-primary');
+    btn.disabled = true; btn.textContent = 'Envoi…';
+    try {
+      const motif = document.getElementById('motif-input').value.trim();
+      const result = await RendezVous.create(selDispoId, motif);
+      const code = result.code_confirmation.replace(/(\d{3})(\d{3})/, '$1 $2');
+      document.getElementById('confirm-code').textContent = code;
+      document.getElementById('confirm-form').style.display = 'none';
+      document.getElementById('confirm-result').style.display = 'block';
+    } catch (err) {
+      btn.disabled = false; btn.textContent = '✓ Valider le rendez-vous';
+      alert(err.message || 'Erreur lors de la confirmation.');
+    }
+  }
+
+  // ── Charger mes RDV ───────────────────────────────────────
+  async function loadMesRdv() {
+    const list = document.querySelector('#page-mesrdv .rdv-list');
+    list.innerHTML = '<div style="color:var(--muted);padding:1rem;">Chargement…</div>';
+    try {
+      const res = await RendezVous.list();
+      const rdvs = res.rdvs || [];
+      if (!rdvs.length) {
+        list.innerHTML = '<div style="color:var(--muted);padding:1rem;">Aucun rendez-vous.</div>';
+        return;
+      }
+      const statutClass = { confirme:'st-confirme', en_attente:'st-attente', termine:'st-termine',
+                            annule_patient:'st-termine', annule_medecin:'st-termine', en_cours:'st-confirme',
+                            absent:'st-termine' };
+      const statutLabel = { confirme:'Confirmé ✅', en_attente:'En attente', termine:'Terminé',
+                            annule_patient:'Annulé', annule_medecin:'Annulé', en_cours:'En cours 🔵',
+                            absent:'Absent' };
+      list.innerHTML = rdvs.map(r => {
+        const d = new Date(r.date_rdv);
+        const day = d.getDate();
+        const month = d.toLocaleDateString('fr-FR', { month:'short' });
+        const sc = statutClass[r.statut] || 'st-attente';
+        const sl = statutLabel[r.statut] || r.statut;
+        const past = r.statut === 'termine' || r.statut.startsWith('annule');
+        return `
+          <div class="rdv-card" ${past ? 'style="opacity:.55"' : ''}>
+            <div class="rdv-date-box" ${past ? 'style="background:var(--border);border-color:var(--border2)"' : ''}>
+              <div class="rdv-day" ${past ? 'style="color:var(--muted)"' : ''}>${day}</div>
+              <div class="rdv-month" ${past ? 'style="color:var(--muted)"' : ''}>${month}</div>
+            </div>
+            <div class="rdv-info">
+              <div class="rdv-service">${r.service} — ${r.medecin_nom}</div>
+              <div class="rdv-detail">${r.structure} · ${r.heure_rdv?.slice(0,5)}</div>
+              <div class="rdv-code" ${past ? 'style="color:var(--muted)"' : ''}>Code : ${r.code_confirmation}</div>
+            </div>
+            <div class="rdv-statut ${sc}">${sl}</div>
+            <div class="rdv-actions">
+              ${!past ? `<button class="btn-xs danger" onclick="annulerRdv(${r.id}, this)">Annuler</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = `<div style="color:var(--red);padding:1rem;">${err.message}</div>`;
+    }
+  }
+
+  async function annulerRdv(id, btn) {
+    if (!confirm('Confirmer l\'annulation ?')) return;
+    try {
+      await RendezVous.cancel(id);
+      btn.closest('.rdv-card').style.opacity = '.4';
+      btn.textContent = 'Annulé';
+      btn.disabled = true;
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  // ── MON PROFIL ────────────────────────────────────────
+  async function loadProfil() {
+    try {
+      const user = await Auth.me();
+      const initials = ((user.prenom||'?')[0] + (user.nom||'?')[0]).toUpperCase();
+      document.getElementById('profil-avatar').textContent = initials;
+      document.getElementById('profil-nom').textContent = user.prenom + ' ' + user.nom;
+      document.getElementById('profil-role').textContent = 'Patient · ' + (user.ville || '');
+      const fields = [
+        ['✉ Email',     user.email],
+        ['📱 Téléphone', user.telephone],
+        ['📍 Ville',     user.ville || '—'],
+        ['🎂 Naissance', user.date_naissance ? new Date(user.date_naissance).toLocaleDateString('fr-FR') : '—'],
+        ['⚧ Sexe',      user.sexe || '—'],
+      ];
+      document.getElementById('profil-infos').innerHTML = fields.map(([k,v]) => `
+        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--muted)">${k}</span>
+          <span style="color:var(--text);font-weight:500">${v}</span>
+        </div>`).join('');
+      // Pré-remplir le formulaire
+      document.getElementById('edit-prenom').value = user.prenom || '';
+      document.getElementById('edit-nom').value    = user.nom    || '';
+      document.getElementById('edit-tel').value    = user.telephone || '';
+      document.getElementById('edit-ville').value  = user.ville  || '';
+    } catch (err) {
+      document.getElementById('profil-infos').innerHTML = `<div style="color:var(--red)">${err.message}</div>`;
+    }
+  }
+
+  async function sauvegarderProfil() {
+    const fb = document.getElementById('profil-feedback');
+    const payload = {
+      prenom:    document.getElementById('edit-prenom').value.trim(),
+      nom:       document.getElementById('edit-nom').value.trim(),
+      telephone: document.getElementById('edit-tel').value.trim(),
+      ville:     document.getElementById('edit-ville').value.trim(),
+    };
+    fb.style.color = 'var(--muted)'; fb.textContent = 'Sauvegarde…';
+    try {
+      await Auth.updateMe(payload);
+      // Mettre à jour le localStorage
+      const u = getUser();
+      if (u) { u.prenom = payload.prenom; u.nom = payload.nom; saveSession(getToken(), u); }
+      fb.style.color = 'var(--green)'; fb.textContent = '✓ Profil mis à jour !';
+      loadProfil();
+      setTimeout(() => { fb.textContent = ''; }, 3000);
+    } catch (err) {
+      fb.style.color = 'var(--red)'; fb.textContent = err.message;
+    }
+  }
+
+  // ── MON DOSSIER ───────────────────────────────────────
+  async function loadDossier() {
+    const el = document.getElementById('dossier-rdv-list');
+    try {
+      const res = await RendezVous.list({ statut: 'termine' });
+      const rdvs = res.rdvs || [];
+      if (!rdvs.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Aucune consultation terminée.</div>';
+        return;
+      }
+      el.innerHTML = rdvs.map(r => `
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+            <div style="font-size:.9rem;font-weight:500;color:var(--text)">${r.service} — ${r.medecin_nom}</div>
+            <div style="font-size:.72rem;color:var(--muted)">${new Date(r.date_rdv).toLocaleDateString('fr-FR')}</div>
+          </div>
+          <div style="font-size:.8rem;color:var(--muted)">${r.structure} · ${String(r.heure_rdv).slice(0,5)}</div>
+          ${r.motif ? `<div style="font-size:.8rem;color:var(--muted);margin-top:.4rem">Motif : ${r.motif}</div>` : ''}
+        </div>`).join('');
+    } catch (err) {
+      el.innerHTML = `<div style="color:var(--red)">${err.message}</div>`;
+    }
+  }
+
+  // ── NOTIFICATIONS ─────────────────────────────────────
+  async function loadNotifications() {
+    const el = document.getElementById('notif-list');
+    // L'API notifications n'est pas encore exposée — on affiche les RDV récents
+    try {
+      const res = await RendezVous.list();
+      const rdvs = (res.rdvs || []).slice(0, 10);
+      if (!rdvs.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Aucune notification.</div>';
+        return;
+      }
+      const icons = { confirme:'✅', en_attente:'⏳', termine:'🏁', annule_patient:'❌', annule_medecin:'❌', en_cours:'🔵' };
+      const labels = { confirme:'Confirmé', en_attente:'En attente', termine:'Terminé', annule_patient:'Annulé', annule_medecin:'Annulé', en_cours:'En cours' };
+      el.innerHTML = rdvs.map(r => `
+        <div style="display:flex;align-items:flex-start;gap:.8rem;padding:.85rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px">
+          <div style="font-size:1.2rem;flex-shrink:0">${icons[r.statut] || '📋'}</div>
+          <div style="flex:1">
+            <div style="font-size:.85rem;font-weight:500;color:var(--text)">RDV ${labels[r.statut] || r.statut} — ${r.service}</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">${r.structure} · ${new Date(r.date_rdv).toLocaleDateString('fr-FR')} à ${String(r.heure_rdv).slice(0,5)}</div>
+            <div style="font-size:.72rem;color:var(--green);margin-top:.2rem;letter-spacing:1px">Code : ${r.code_confirmation}</div>
+          </div>
+        </div>`).join('');
+    } catch (err) {
+      el.innerHTML = `<div style="color:var(--red)">${err.message}</div>`;
+    }
+  }
+</script>
+</body>
+</html>

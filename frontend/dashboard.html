@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunu Kiray — Dashboard Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="api.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #06100e; --bg2: #0c1f1a; --card: #0e2019; --border: #1e3d32; --border2: #2a5040;
+      --green: #00e5a0; --green2: #00c896; --green-dim: #00e5a015;
+      --amber: #f5a623; --amber-dim: #f5a62315;
+      --red: #ff5c5c; --red-dim: #ff5c5c15;
+      --blue: #4f8fff; --blue-dim: #4f8fff15;
+      --text: #e8f5f0; --muted: #7aa899;
+      --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+    }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; display: flex; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; min-height: 100vh; background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 1.5rem 0; flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+    }
+    .sidebar-logo { padding: 0 1.5rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .sidebar-logo a { font-family: var(--font-head); font-size: 1.2rem; font-weight: 800; color: var(--text); text-decoration: none; }
+    .sidebar-logo a span { color: var(--green); }
+    .sidebar-logo .role-badge { font-size: .65rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: .2rem; }
+    .nav-section { padding: .5rem 1rem .25rem; font-size: .65rem; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--border2); }
+    .nav-item { display: flex; align-items: center; gap: .75rem; padding: .65rem 1.5rem; color: var(--muted); text-decoration: none; font-size: .875rem; font-weight: 400; transition: all .2s; cursor: pointer; border-left: 2px solid transparent; }
+    .nav-item:hover { color: var(--text); background: var(--green-dim); }
+    .nav-item.active { color: var(--green); background: var(--green-dim); border-left-color: var(--green); }
+    .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 100px; }
+    .sidebar-footer { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
+    .user-row { display: flex; align-items: center; gap: .75rem; }
+    .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green-dim); border: 1px solid rgba(0,229,160,.2); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; color: var(--green); flex-shrink: 0; }
+    .user-name { font-size: .82rem; font-weight: 500; color: var(--text); }
+    .user-role { font-size: .7rem; color: var(--muted); }
+
+    /* ── MAIN ── */
+    .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── TOPBAR ── */
+    .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40; }
+    .topbar-left h1 { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .topbar-left p { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .live-pill { display: flex; align-items: center; gap: .4rem; background: var(--green-dim); border: 1px solid rgba(0,229,160,.2); border-radius: 100px; padding: .35rem .85rem; font-size: .72rem; font-weight: 500; color: var(--green); }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+    .btn-icon { width: 36px; height: 36px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .9rem; transition: border-color .2s; position: relative; }
+    .btn-icon:hover { border-color: var(--border2); }
+    .notif-badge { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; background: var(--red); border-radius: 50%; font-size: .6rem; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; }
+
+    /* ── CONTENT ── */
+    .content { padding: 2rem; flex: 1; }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.3rem 1.5rem; transition: border-color .2s; }
+    .kpi-card:hover { border-color: var(--border2); }
+    .kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .kpi-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .kpi-trend { font-size: .72rem; font-weight: 600; padding: .2rem .55rem; border-radius: 100px; }
+    .trend-up   { background: var(--green-dim); color: var(--green); }
+    .trend-down { background: var(--red-dim);   color: var(--red); }
+    .trend-neu  { background: var(--amber-dim); color: var(--amber); }
+    .kpi-val { font-family: var(--font-head); font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; }
+    .kpi-label { font-size: .78rem; color: var(--muted); margin-top: .35rem; }
+
+    /* ── GRID LAYOUT ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+    /* ── PANEL ── */
+    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.4rem; }
+    .panel-title { font-family: var(--font-head); font-size: .95rem; font-weight: 700; color: var(--text); }
+    .panel-action { font-size: .75rem; color: var(--green); cursor: pointer; text-decoration: none; }
+    .panel-action:hover { text-decoration: underline; }
+
+    /* ── STRUCTURE TABLE ── */
+    .struct-row { display: flex; align-items: center; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--border); }
+    .struct-row:last-child { border-bottom: none; }
+    .struct-info { min-width: 140px; }
+    .struct-name { font-size: .85rem; font-weight: 500; color: var(--text); }
+    .struct-loc  { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+    .bar-wrap { flex: 1; }
+    .bar-track { height: 6px; background: var(--border); border-radius: 10px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 10px; transition: width 1.2s ease; }
+    .bar-green  { background: var(--green); }
+    .bar-amber  { background: var(--amber); }
+    .bar-red    { background: var(--red); }
+    .bar-meta { display: flex; justify-content: space-between; margin-top: .3rem; }
+    .bar-pct { font-size: .72rem; font-weight: 600; }
+    .bar-count { font-size: .7rem; color: var(--muted); }
+    .struct-status { font-size: .7rem; font-weight: 600; padding: .2rem .6rem; border-radius: 100px; min-width: 60px; text-align: center; }
+    .s-ok      { background: var(--green-dim); color: var(--green); }
+    .s-warn    { background: var(--amber-dim); color: var(--amber); }
+    .s-danger  { background: var(--red-dim);   color: var(--red); }
+    .struct-medecins { font-size: .8rem; color: var(--muted); min-width: 55px; text-align: right; }
+
+    /* ── ALERTES ── */
+    .alerte-item { display: flex; align-items: flex-start; gap: .85rem; padding: .85rem; border-radius: 12px; margin-bottom: .6rem; border: 1px solid; transition: opacity .2s; }
+    .alerte-item:last-child { margin-bottom: 0; }
+    .alerte-critical { background: var(--red-dim);   border-color: rgba(255,92,92,.2); }
+    .alerte-haute    { background: var(--amber-dim); border-color: rgba(245,166,35,.2); }
+    .alerte-moyenne  { background: var(--blue-dim);  border-color: rgba(79,143,255,.2); }
+    .alerte-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+    .alerte-body { flex: 1; }
+    .alerte-titre { font-size: .83rem; font-weight: 500; color: var(--text); }
+    .alerte-msg   { font-size: .75rem; color: var(--muted); margin-top: .2rem; font-weight: 300; }
+    .alerte-time  { font-size: .68rem; color: var(--muted); margin-top: .3rem; }
+    .alerte-btn { font-size: .72rem; font-weight: 500; color: var(--green); cursor: pointer; background: none; border: none; padding: .3rem .6rem; border-radius: 8px; background: var(--green-dim); flex-shrink: 0; transition: opacity .2s; }
+    .alerte-btn:hover { opacity: .8; }
+
+    /* ── MÉDECINS TABLE ── */
+    .med-row { display: flex; align-items: center; gap: .85rem; padding: .7rem 0; border-bottom: 1px solid var(--border); }
+    .med-row:last-child { border-bottom: none; }
+    .med-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green-dim); border: 1px solid rgba(0,229,160,.15); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: var(--green); flex-shrink: 0; }
+    .med-name { font-size: .83rem; font-weight: 500; color: var(--text); }
+    .med-spec { font-size: .72rem; color: var(--muted); }
+    .med-struct { font-size: .72rem; color: var(--muted); margin-left: auto; text-align: right; }
+    .dispo-badge { font-size: .65rem; font-weight: 600; padding: .18rem .5rem; border-radius: 100px; flex-shrink: 0; }
+    .d-dispo  { background: var(--green-dim); color: var(--green); }
+    .d-occupe { background: var(--amber-dim); color: var(--amber); }
+    .d-absent { background: var(--red-dim);   color: var(--red); }
+    .d-mission{ background: var(--blue-dim);  color: var(--blue); }
+
+    /* ── REDEPLOI CARD ── */
+    .redeploi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: .8rem; }
+    .redeploi-card:last-child { margin-bottom: 0; }
+    .redeploi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+    .redeploi-titre { font-size: .83rem; font-weight: 500; color: var(--text); }
+    .redeploi-prio { font-size: .65rem; font-weight: 700; padding: .18rem .5rem; border-radius: 100px; }
+    .redeploi-detail { font-size: .78rem; color: var(--muted); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .redeploi-actions { display: flex; gap: .5rem; margin-top: .75rem; }
+    .btn-sm { font-size: .75rem; font-weight: 500; padding: .4rem .9rem; border-radius: 8px; border: 1px solid; cursor: pointer; transition: opacity .2s; font-family: var(--font-body); }
+    .btn-sm:hover { opacity: .8; }
+    .btn-accept { background: var(--green-dim); color: var(--green); border-color: rgba(0,229,160,.3); }
+    .btn-refuse { background: var(--red-dim);   color: var(--red);   border-color: rgba(255,92,92,.3); }
+    .btn-detail { background: var(--bg);        color: var(--muted); border-color: var(--border); }
+
+    /* ── MINI CHART ── */
+    canvas { max-height: 220px; }
+
+    /* ── SECTIONS ── */
+    .dash-section { display: none; }
+    .dash-section.active { display: block; }
+
+    /* ── TABLE GÉNÉRIQUE ── */
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { text-align: left; padding: .6rem 1rem; color: var(--muted); font-weight: 500; font-size: .72rem; letter-spacing: .5px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--green-dim); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="index.html">Sunu <span>Kiray</span></a>
+    <div class="role-badge">Administrateur</div>
+  </div>
+
+  <div class="nav-section">Principal</div>
+  <a class="nav-item active" onclick="showSection('dashboard')"><span class="icon">📊</span> Tableau de bord</a>
+  <a class="nav-item" onclick="showSection('structures')"><span class="icon">🏥</span> Structures</a>
+  <a class="nav-item" onclick="showSection('medecins')"><span class="icon">👨‍⚕️</span> Médecins</a>
+  <a class="nav-item" onclick="showSection('rendez-vous')"><span class="icon">📅</span> Rendez-vous</a>
+
+  <div class="nav-section">Gestion</div>
+  <a class="nav-item" onclick="showSection('alertes')"><span class="icon">🔔</span> Alertes <span class="nav-badge" id="badge-alertes">3</span></a>
+  <a class="nav-item" onclick="showSection('redeplois')"><span class="icon">🔄</span> Redéploiements</a>
+  <a class="nav-item" onclick="showSection('rapports')"><span class="icon">📈</span> Rapports</a>
+
+  <div class="nav-section">Système</div>
+  <a class="nav-item" href="#"><span class="icon">⚙️</span> Paramètres</a>
+  <a class="nav-item" onclick="Auth.logout()" style="cursor:pointer"><span class="icon">🚪</span> Déconnexion</a>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar">MF</div>
+      <div>
+        <div class="user-name">Dr. Mangoné Fall</div>
+        <div class="user-role">Administrateur</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Tableau de bord</h1>
+      <p id="topbar-date">Chargement…</p>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="live-dot"></div>Données en direct</div>
+      <button class="btn-icon" title="Générer les créneaux (30j)" onclick="genererCreneaux()" style="width:auto;padding:0 .8rem;gap:.4rem;font-size:.75rem;color:var(--green)">🔄 Créneaux</button>
+      <div class="btn-icon">
+        🔔
+        <div class="notif-badge" id="badge-alertes-top">3</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ══ SECTION : TABLEAU DE BORD ══ -->
+    <div id="section-dashboard" class="dash-section active">
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon" style="background:var(--green-dim)">🏥</div></div>
+          <div class="kpi-val" id="kpi-structures">—</div>
+          <div class="kpi-label">Structures actives</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon" style="background:var(--amber-dim)">👨‍⚕️</div></div>
+          <div class="kpi-val" id="kpi-medecins">—</div>
+          <div class="kpi-label">Médecins inscrits</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon" style="background:var(--blue-dim)">📅</div></div>
+          <div class="kpi-val" id="kpi-rdv">—</div>
+          <div class="kpi-label">RDV aujourd'hui</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><div class="kpi-icon" style="background:var(--red-dim)">🚨</div></div>
+          <div class="kpi-val" id="kpi-alertes" style="color:var(--red)">—</div>
+          <div class="kpi-label">Alertes actives</div>
+        </div>
+      </div>
+
+      <div class="grid-3-1">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Charge des structures en temps réel</div>
+            <a class="panel-action" onclick="showSection('structures')">Voir tout →</a>
+          </div>
+          <div id="struct-list"><div style="color:var(--muted);font-size:.85rem">Chargement…</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Activité (7 jours)</div></div>
+          <canvas id="chartActivite"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🚨 Alertes actives</div>
+            <a class="panel-action" onclick="showSection('alertes')">Tout voir →</a>
+          </div>
+          <div id="dash-alertes"><div style="color:var(--muted);font-size:.85rem">Chargement…</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">👨‍⚕️ Médecins</div>
+            <a class="panel-action" onclick="showSection('medecins')">Gérer →</a>
+          </div>
+          <div id="dash-medecins"><div style="color:var(--muted);font-size:.85rem">Chargement…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION : STRUCTURES ══ -->
+    <div id="section-structures" class="dash-section">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">🏥 Structures de santé</div>
+          <span style="font-size:.78rem;color:var(--muted)" id="struct-count"></span>
+        </div>
+        <div id="structures-list"><div style="color:var(--muted);padding:1rem">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION : MÉDECINS ══ -->
+    <div id="section-medecins" class="dash-section">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">👨‍⚕️ Médecins inscrits</div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <select id="filter-dispo" onchange="loadMedecins()" style="background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .6rem;font-size:.78rem">
+              <option value="">Tous</option>
+              <option value="1">Disponibles</option>
+            </select>
+          </div>
+        </div>
+        <div id="medecins-list"><div style="color:var(--muted);padding:1rem">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION : RENDEZ-VOUS ══ -->
+    <div id="section-rendez-vous" class="dash-section">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">📅 Rendez-vous</div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select id="filter-structure-rdv" onchange="loadRendezVous()"
+              style="background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .6rem;font-size:.78rem">
+              <option value="">Tous les hôpitaux</option>
+            </select>
+            <input type="date" id="filter-date-rdv" onchange="loadRendezVous()"
+              style="background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .6rem;font-size:.78rem">
+            <select id="filter-statut-rdv" onchange="loadRendezVous()"
+              style="background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .6rem;font-size:.78rem">
+              <option value="">Tous statuts</option>
+              <option value="en_attente">En attente</option>
+              <option value="confirme">Confirmé</option>
+              <option value="en_cours">En cours</option>
+              <option value="termine">Terminé</option>
+              <option value="annule_patient">Annulé</option>
+            </select>
+          </div>
+        </div>
+        <div id="rdv-list"><div style="color:var(--muted);padding:1rem">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION : ALERTES ══ -->
+    <div id="section-alertes" class="dash-section">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">🚨 Alertes actives</div>
+          <select id="filter-priorite" onchange="loadAlertes()"
+            style="background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .6rem;font-size:.78rem">
+            <option value="">Toutes priorités</option>
+            <option value="critique">Critique</option>
+            <option value="haute">Haute</option>
+            <option value="moyenne">Moyenne</option>
+          </select>
+        </div>
+        <div id="alertes-list"><div style="color:var(--muted);padding:1rem">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION : RAPPORTS ══ -->
+    <div id="section-rapports" class="dash-section">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">📈 Rapports statistiques</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem" id="rapport-kpis">
+          <div style="color:var(--muted);font-size:.85rem;grid-column:1/-1">Chargement…</div>
+        </div>
+        <div id="rapport-content"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION : REDÉPLOIEMENTS ══ -->
+    <div id="section-redeplois" class="dash-section">
+
+      <!-- Formulaire proposer un redéploiement -->
+      <div class="panel" style="margin-bottom:1.5rem">
+        <div class="panel-head"><div class="panel-title">➕ Proposer un redéploiement</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+          <div>
+            <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Médecin</label>
+            <select id="rdp-medecin" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+              <option value="">Chargement…</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Structure destination</label>
+            <select id="rdp-dest" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+              <option value="">Chargement…</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Motif</label>
+            <input type="text" id="rdp-motif" placeholder="Ex: Surcharge pédiatrie" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Date début</label>
+            <input type="date" id="rdp-debut" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:.3rem">Date fin</label>
+            <input type="date" id="rdp-fin" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.6rem .8rem;font-size:.85rem">
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button onclick="proposerRedeploi()" style="width:100%;background:var(--green);color:var(--bg);border:none;border-radius:10px;padding:.65rem;font-size:.85rem;font-weight:500;cursor:pointer">
+              ✓ Proposer
+            </button>
+          </div>
+        </div>
+        <div id="rdp-feedback" style="font-size:.82rem;color:var(--muted)"></div>
+      </div>
+
+      <!-- Liste des redéploiements -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">🔄 Redéploiements en cours</div>
+          <button onclick="loadRedeplois()" style="font-size:.75rem;color:var(--green);background:none;border:none;cursor:pointer">↻ Actualiser</button>
+        </div>
+        <div id="redeplois-list"><div style="color:var(--muted);padding:1rem">Chargement…</div></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  requireLogin('administrateur');
+
+  const me = getUser();
+  if (me) {
+    document.querySelector('.user-name').textContent = me.prenom + ' ' + me.nom;
+    document.querySelector('.user-role').textContent = 'Administrateur';
+    document.querySelector('.user-avatar').textContent = (me.prenom[0] + me.nom[0]).toUpperCase();
+  }
+
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // ── Navigation ────────────────────────────────────────
+  const sectionTitles = {
+    'dashboard': 'Tableau de bord',
+    'structures': 'Structures de santé',
+    'medecins': 'Médecins',
+    'rendez-vous': 'Rendez-vous',
+    'alertes': 'Alertes',
+    'redeplois': 'Redéploiements',
+    'rapports': 'Rapports',
+  };
+
+  function showSection(name) {
+    document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    // Activer le bon nav-item
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${name}'`)) {
+        n.classList.add('active');
+      }
+    });
+    document.querySelector('.topbar-left h1').textContent = sectionTitles[name] || name;
+    // Charger les données de la section
+    if (name === 'dashboard')    loadDashboard();
+    if (name === 'structures')   loadStructures();
+    if (name === 'medecins')     loadMedecins();
+    if (name === 'rendez-vous')  { loadStructureFilter(); loadRendezVous(); }
+    if (name === 'alertes')      loadAlertes();
+    if (name === 'rapports')     loadRapports();
+    if (name === 'redeplois')    { initRedeploisForm(); loadRedeplois(); }
+  }
+
+  // ── Helpers visuels ───────────────────────────────────
+  function colorClass(c) {
+    return c >= 80 ? ['bar-red','s-danger'] : c >= 60 ? ['bar-amber','s-warn'] : ['bar-green','s-ok'];
+  }
+  function statusLabel(c) { return c >= 80 ? 'Critique' : c >= 60 ? 'Chargé' : 'Normal'; }
+
+  const dispoLabel = { disponible:'Disponible', en_consultation:'Consultation', en_mission:'En mission', absent:'Absent', conge:'Congé' };
+  const dispoClass = { disponible:'d-dispo', en_consultation:'d-occupe', en_mission:'d-mission', absent:'d-absent', conge:'d-absent' };
+
+  const statutLabel = { en_attente:'En attente', confirme:'Confirmé', en_cours:'En cours', termine:'Terminé', annule_patient:'Annulé', annule_medecin:'Annulé' };
+  const statutColor = { en_attente:'var(--amber)', confirme:'var(--green)', en_cours:'var(--blue)', termine:'var(--muted)', annule_patient:'var(--red)', annule_medecin:'var(--red)' };
+
+  const alerteClass = { critique:'alerte-critical', haute:'alerte-haute', moyenne:'alerte-moyenne', faible:'alerte-moyenne' };
+  const alerteIcon  = { critique:'🔴', haute:'🟠', moyenne:'🔵', faible:'⚪' };
+
+  // ── RAPPORTS ──────────────────────────────────────────
+  async function loadRapports() {
+    const kpisEl   = document.getElementById('rapport-kpis');
+    const contentEl = document.getElementById('rapport-content');
+    try {
+      // On réutilise les stats du dashboard pour les rapports
+      const [stats, medecins, rdvRes] = await Promise.all([
+        Dashboard.stats(),
+        Medecins.list(),
+        RendezVous.list({ per_page: 50 }),
+      ]);
+
+      const rdvs = rdvRes.rdvs || [];
+      const total = rdvRes.pagination?.total || rdvs.length;
+
+      // KPIs rapports
+      kpisEl.innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-val">${total}</div>
+          <div class="kpi-label">Total RDV enregistrés</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">${stats.total_patients}</div>
+          <div class="kpi-label">Patients inscrits</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val">${stats.medecins_disponibles}</div>
+          <div class="kpi-label">Médecins disponibles</div>
+        </div>`;
+
+      // Tableau récap par structure
+      const byStruct = {};
+      stats.charge_structures.forEach(s => {
+        byStruct[s.nom] = { charge: s.taux_charge_pct, medecins: s.medecins_disponibles, total: s.total_medecins };
+      });
+
+      contentEl.innerHTML = `
+        <div style="font-family:var(--font-head);font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:1rem">
+          Récapitulatif par structure
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Structure</th><th>Charge actuelle</th><th>Médecins dispo</th><th>Total médecins</th><th>Statut</th></tr></thead>
+          <tbody>${stats.charge_structures.map(s => {
+            const c = parseFloat(s.taux_charge_pct);
+            const col = c>=80?'var(--red)':c>=60?'var(--amber)':'var(--green)';
+            return `<tr>
+              <td><strong>${s.nom}</strong><div style="font-size:.72rem;color:var(--muted)">${s.ville}</div></td>
+              <td><span style="color:${col};font-weight:600">${c}%</span></td>
+              <td style="text-align:center">${s.medecins_disponibles}</td>
+              <td style="text-align:center">${s.total_medecins}</td>
+              <td><span class="struct-status ${colorClass(c)[1]}">${statusLabel(c)}</span></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+        <div style="font-family:var(--font-head);font-size:.9rem;font-weight:700;color:var(--text);margin:1.5rem 0 1rem">
+          Activité RDV — 7 derniers jours
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Jour</th><th>Nombre de RDV</th></tr></thead>
+          <tbody>${stats.rdv_semaine.map(r => `<tr><td>${r.jour}</td><td>${r.total}</td></tr>`).join('')}</tbody>
+        </table>`;
+    } catch (err) {
+      kpisEl.innerHTML = `<div style="color:var(--red);grid-column:1/-1">${err.message}</div>`;
+    }
+  }
+
+  // ── DASHBOARD ─────────────────────────────────────────
+  let chartInstance = null;
+  async function loadDashboard() {
+    // Stats principales
+    try {
+      const stats = await Dashboard.stats();
+      document.getElementById('kpi-structures').textContent = stats.structures_actives;
+      document.getElementById('kpi-medecins').textContent   = stats.total_medecins;
+      document.getElementById('kpi-rdv').textContent        = stats.rdv_aujourd_hui;
+      document.getElementById('kpi-alertes').textContent    = stats.alertes_actives;
+      document.getElementById('badge-alertes').textContent  = stats.alertes_actives;
+
+      // Structures barres
+      const list = document.getElementById('struct-list');
+      list.innerHTML = '';
+      stats.charge_structures.forEach(s => {
+        const c = parseFloat(s.taux_charge_pct);
+        const [barCls, sCls] = colorClass(c);
+        list.innerHTML += `
+          <div class="struct-row">
+            <div class="struct-info"><div class="struct-name">${s.nom}</div><div class="struct-loc">${s.ville}</div></div>
+            <div class="bar-wrap">
+              <div class="bar-track"><div class="bar-fill ${barCls}" style="width:0%" data-w="${c}%"></div></div>
+              <div class="bar-meta">
+                <span class="bar-pct" style="color:${c>=80?'var(--red)':c>=60?'var(--amber)':'var(--green)'}">${c}%</span>
+                <span class="bar-count">${s.charge_actuelle}/${s.capacite_journaliere}</span>
+              </div>
+            </div>
+            <div class="struct-status ${sCls}">${statusLabel(c)}</div>
+            <div class="struct-medecins">👨‍⚕️ ${s.medecins_disponibles}</div>
+          </div>`;
+      });
+      setTimeout(() => document.querySelectorAll('.bar-fill[data-w]').forEach(b => b.style.width = b.dataset.w), 100);
+
+      // Chart
+      const ctx = document.getElementById('chartActivite').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: stats.rdv_semaine.map(r => r.jour),
+          datasets: [{ label:'RDV', data: stats.rdv_semaine.map(r => r.total),
+            backgroundColor:'rgba(0,229,160,.25)', borderColor:'#00e5a0', borderWidth:1.5, borderRadius:6 }]
+        },
+        options: { responsive:true, maintainAspectRatio:true, plugins:{legend:{display:false}},
+          scales: { x:{grid:{color:'#1e3d32'},ticks:{color:'#7aa899',font:{size:11}}},
+                    y:{grid:{color:'#1e3d32'},ticks:{color:'#7aa899',font:{size:11}}} } }
+      });
+    } catch (err) { console.error('Dashboard stats:', err); }
+
+    // Alertes résumé (appel séparé)
+    try {
+      const alertes = await Alertes.list();
+      const dashAlertes = document.getElementById('dash-alertes');
+      dashAlertes.innerHTML = alertes.slice(0,3).map(a => `
+        <div class="alerte-item ${alerteClass[a.priorite] || 'alerte-moyenne'}">
+          <div class="alerte-icon">${alerteIcon[a.priorite] || '🔵'}</div>
+          <div class="alerte-body">
+            <div class="alerte-titre">${a.structure_nom}</div>
+            <div class="alerte-msg">${a.message}</div>
+          </div>
+          <button class="alerte-btn" data-id="${a.id}" onclick="traiterAlerte(this)">Traiter</button>
+        </div>`).join('') || '<div style="color:var(--muted);font-size:.85rem">Aucune alerte active. ✅</div>';
+    } catch (err) {
+      document.getElementById('dash-alertes').innerHTML = '<div style="color:var(--muted);font-size:.85rem">Impossible de charger les alertes.</div>';
+    }
+
+    // Médecins résumé (appel séparé)
+    try {
+      const medecins = await Medecins.list();
+      const dashMed = document.getElementById('dash-medecins');
+      dashMed.innerHTML = medecins.slice(0,5).map(m => {
+        const initials = m.nom_complet.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        return `<div class="med-row">
+          <div class="med-avatar">${initials}</div>
+          <div><div class="med-name">${m.nom_complet}</div><div class="med-spec">${m.specialite}</div></div>
+          <div class="dispo-badge ${dispoClass[m.disponibilite] || 'd-absent'}">${dispoLabel[m.disponibilite] || m.disponibilite}</div>
+          <div class="med-struct">${m.structure_nom} · ${m.ville}</div>
+        </div>`;
+      }).join('');
+    } catch (err) {
+      document.getElementById('dash-medecins').innerHTML = '<div style="color:var(--muted);font-size:.85rem">Impossible de charger les médecins.</div>';
+    }
+  }
+
+  // ── STRUCTURES ────────────────────────────────────────
+  async function loadStructures() {
+    const el = document.getElementById('structures-list');
+    el.innerHTML = '<div style="color:var(--muted);padding:1rem">Chargement…</div>';
+    try {
+      const structs = await Structures.list();
+      document.getElementById('struct-count').textContent = structs.length + ' structures';
+      el.innerHTML = `<table class="data-table">
+        <thead><tr><th>Nom</th><th>Type</th><th>Ville</th><th>Charge</th><th>Médecins dispo</th><th>Statut</th></tr></thead>
+        <tbody>${structs.map(s => {
+          const c = parseFloat(s.taux_charge_pct);
+          const col = c>=80?'var(--red)':c>=60?'var(--amber)':'var(--green)';
+          return `<tr>
+            <td><strong>${s.nom}</strong></td>
+            <td style="color:var(--muted)">${s.type_structure.replace('_',' ')}</td>
+            <td>${s.ville}</td>
+            <td><span style="color:${col};font-weight:600">${c}%</span> <span style="color:var(--muted);font-size:.75rem">(${s.charge_actuelle}/${s.capacite_journaliere})</span></td>
+            <td style="text-align:center">👨‍⚕️ ${s.medecins_disponibles}</td>
+            <td><span class="struct-status ${colorClass(c)[1]}">${statusLabel(c)}</span></td>
+          </tr>`;
+        }).join('')}</tbody></table>`;
+    } catch (err) { el.innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`; }
+  }
+
+  // ── MÉDECINS ──────────────────────────────────────────
+  async function loadMedecins() {
+    const el = document.getElementById('medecins-list');
+    el.innerHTML = '<div style="color:var(--muted);padding:1rem">Chargement…</div>';
+    const disponible = document.getElementById('filter-dispo').value;
+    try {
+      const medecins = await Medecins.list(disponible ? { disponible } : {});
+      el.innerHTML = `<table class="data-table">
+        <thead><tr><th>Médecin</th><th>Spécialité</th><th>Grade</th><th>Structure</th><th>Ville</th><th>Disponibilité</th></tr></thead>
+        <tbody>${medecins.map(m => {
+          const initials = m.nom_complet.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+          return `<tr>
+            <td><div style="display:flex;align-items:center;gap:.6rem">
+              <div class="med-avatar">${initials}</div>
+              <div><div class="med-name">${m.nom_complet}</div><div style="font-size:.72rem;color:var(--muted)">${m.email}</div></div>
+            </div></td>
+            <td>${m.specialite}</td>
+            <td style="color:var(--muted)">${m.grade}</td>
+            <td>${m.structure_nom}</td>
+            <td>${m.ville}</td>
+            <td><span class="dispo-badge ${dispoClass[m.disponibilite] || 'd-absent'}">${dispoLabel[m.disponibilite] || m.disponibilite}</span></td>
+          </tr>`;
+        }).join('')}</tbody></table>`;
+    } catch (err) { el.innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`; }
+  }
+
+  // ── FILTRE STRUCTURES pour RDV ───────────────────────
+  async function loadStructureFilter() {
+    const sel = document.getElementById('filter-structure-rdv');
+    if (sel.options.length > 1) return; // déjà chargé
+    try {
+      const structs = await Structures.list();
+      structs.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.nom;
+        sel.appendChild(opt);
+      });
+    } catch (e) {}
+  }
+
+  // ── RENDEZ-VOUS ───────────────────────────────────────
+  async function loadRendezVous() {
+    const el = document.getElementById('rdv-list');
+    el.innerHTML = '<div style="color:var(--muted);padding:1rem">Chargement…</div>';
+    const params = {};
+    const d  = document.getElementById('filter-date-rdv').value;
+    const s  = document.getElementById('filter-statut-rdv').value;
+    const st = document.getElementById('filter-structure-rdv').value;
+    if (d)  params.date_rdv    = d;
+    if (s)  params.statut      = s;
+    if (st) params.structure_id = st;
+    try {
+      const res = await RendezVous.list(params);
+      const rdvs = res.rdvs || [];
+      if (!rdvs.length) { el.innerHTML = '<div style="color:var(--muted);padding:1rem">Aucun rendez-vous.</div>'; return; }
+      el.innerHTML = `<table class="data-table">
+        <thead><tr><th>Date</th><th>Heure</th><th>Patient</th><th>Médecin</th><th>Service</th><th>Structure</th><th>Statut</th></tr></thead>
+        <tbody>${rdvs.map(r => `<tr>
+          <td>${new Date(r.date_rdv + 'T00:00:00').toLocaleDateString('fr-FR')}</td>
+          <td>${formatHeure(r.heure_rdv)}</td>
+          <td>${r.patient_nom}</td>
+          <td>${r.medecin_nom}</td>
+          <td>${r.service}</td>
+          <td>${r.structure}</td>
+          <td><span style="font-size:.72rem;font-weight:600;color:${statutColor[r.statut]||'var(--muted)'}">${statutLabel[r.statut]||r.statut}</span></td>
+        </tr>`).join('')}</tbody></table>
+        <div style="font-size:.78rem;color:var(--muted);padding:.8rem 1rem">${res.pagination?.total || rdvs.length} rendez-vous au total</div>`;
+    } catch (err) { el.innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`; }
+  }
+
+  // Convertit heure_rdv quelle que soit sa forme — définie dans api.js
+
+  // ── ALERTES ───────────────────────────────────────────
+  async function loadAlertes() {
+    const el = document.getElementById('alertes-list');
+    el.innerHTML = '<div style="color:var(--muted);padding:1rem">Chargement…</div>';
+    const priorite = document.getElementById('filter-priorite').value;
+    try {
+      const alertes = await Alertes.list(priorite ? { priorite } : {});
+      if (!alertes.length) { el.innerHTML = '<div style="color:var(--muted);padding:1rem">Aucune alerte active. ✅</div>'; return; }
+      el.innerHTML = alertes.map(a => `
+        <div class="alerte-item ${alerteClass[a.priorite] || 'alerte-moyenne'}" style="margin:.5rem 0">
+          <div class="alerte-icon">${alerteIcon[a.priorite] || '🔵'}</div>
+          <div class="alerte-body">
+            <div class="alerte-titre">${a.structure_nom} — ${a.type_alerte.replace(/_/g,' ')}</div>
+            <div class="alerte-msg">${a.message}</div>
+            <div class="alerte-time">${new Date(a.created_at).toLocaleString('fr-FR')}</div>
+          </div>
+          <button class="alerte-btn" data-id="${a.id}" onclick="traiterAlerte(this)">Traiter</button>
+        </div>`).join('');
+    } catch (err) { el.innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`; }
+  }
+
+  async function traiterAlerte(btn) {
+    const id = btn.dataset.id;
+    try {
+      if (id) await Alertes.traiter(parseInt(id));
+      btn.closest('.alerte-item').style.opacity = '.35';
+      btn.textContent = '✓ Traité'; btn.disabled = true;
+      const kpi = document.getElementById('kpi-alertes');
+      const badge = document.getElementById('badge-alertes');
+      const n = Math.max(0, parseInt(kpi.textContent) - 1);
+      kpi.textContent = n; badge.textContent = n;
+    } catch (err) { console.error(err); }
+  }
+
+  // Charger le dashboard au démarrage
+  loadDashboard();
+
+  // ── REDÉPLOIEMENTS ────────────────────────────────────
+  const rdpStatutLabel = { propose:'Proposé', accepte:'Accepté', refuse:'Refusé', en_cours:'En cours', termine:'Terminé', annule:'Annulé' };
+  const rdpStatutColor = { propose:'var(--amber)', accepte:'var(--green)', refuse:'var(--red)', en_cours:'var(--blue)', termine:'var(--muted)', annule:'var(--muted)' };
+
+  async function initRedeploisForm() {
+    // Peupler médecins et structures une seule fois
+    const selMed  = document.getElementById('rdp-medecin');
+    const selDest = document.getElementById('rdp-dest');
+    if (selMed.options.length > 1) return;
+    try {
+      const [meds, structs] = await Promise.all([Medecins.list(), Structures.list()]);
+      selMed.innerHTML  = '<option value="">-- Médecin --</option>' +
+        meds.map(m => `<option value="${m.id}" data-struct="${m.structure_nom}">${m.nom_complet} (${m.specialite})</option>`).join('');
+      selDest.innerHTML = '<option value="">-- Structure destination --</option>' +
+        structs.map(s => `<option value="${s.id}">${s.nom} · ${s.ville}</option>`).join('');
+      // Pré-remplir les dates
+      const today = new Date().toISOString().split('T')[0];
+      const next7 = new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+      document.getElementById('rdp-debut').value = today;
+      document.getElementById('rdp-fin').value   = next7;
+    } catch (e) { console.error(e); }
+  }
+
+  async function proposerRedeploi() {
+    const fb = document.getElementById('rdp-feedback');
+    const medId  = parseInt(document.getElementById('rdp-medecin').value);
+    const destId = parseInt(document.getElementById('rdp-dest').value);
+    const motif  = document.getElementById('rdp-motif').value.trim();
+    const debut  = document.getElementById('rdp-debut').value;
+    const fin    = document.getElementById('rdp-fin').value;
+    if (!medId || !destId || !motif || !debut || !fin) {
+      fb.style.color = 'var(--red)'; fb.textContent = 'Tous les champs sont requis.'; return;
+    }
+    // Récupérer la structure d'origine du médecin
+    const medSel = document.getElementById('rdp-medecin');
+    const origNom = medSel.selectedOptions[0]?.dataset.struct || '';
+    // Trouver l'ID de la structure d'origine
+    const structs = await Structures.list();
+    const orig = structs.find(s => s.nom.includes(origNom.split('·')[0].trim())) || structs[0];
+    fb.style.color = 'var(--muted)'; fb.textContent = 'Envoi…';
+    try {
+      await Redeplois.proposer({
+        medecin_id: medId,
+        structure_origine_id: orig.id,
+        structure_destination_id: destId,
+        date_debut: debut,
+        date_fin: fin,
+        motif,
+      });
+      fb.style.color = 'var(--green)'; fb.textContent = '✓ Redéploiement proposé. Le médecin a été notifié.';
+      loadRedeplois();
+      setTimeout(() => { fb.textContent = ''; }, 4000);
+    } catch (err) {
+      fb.style.color = 'var(--red)'; fb.textContent = err.message;
+    }
+  }
+
+  async function loadRedeplois() {
+    const el = document.getElementById('redeplois-list');
+    el.innerHTML = '<div style="color:var(--muted);padding:1rem">Chargement…</div>';
+    try {
+      const rows = await Redeplois.list();
+      if (!rows.length) { el.innerHTML = '<div style="color:var(--muted);padding:1rem">Aucun redéploiement.</div>'; return; }
+      el.innerHTML = rows.map(r => `
+        <div class="redeploi-card">
+          <div class="redeploi-top">
+            <div class="redeploi-titre">${r.medecin_nom} (${r.specialite}) → ${r.structure_destination}</div>
+            <span style="font-size:.72rem;font-weight:600;padding:.2rem .6rem;border-radius:100px;background:rgba(0,0,0,.2);color:${rdpStatutColor[r.statut]||'var(--muted)'}">${rdpStatutLabel[r.statut]||r.statut}</span>
+          </div>
+          <div class="redeploi-detail">
+            <span>🏥 Depuis : ${r.structure_origine}</span>
+            <span>📅 ${r.date_debut} → ${r.date_fin}</span>
+            <span>📝 ${r.motif}</span>
+            ${r.note_medecin ? `<span>💬 ${r.note_medecin}</span>` : ''}
+          </div>
+        </div>`).join('');
+    } catch (err) { el.innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`; }
+  }
+
+  // ── Génération automatique des créneaux ───────────────
+  async function genererCreneaux() {
+    const btn = document.querySelector('[onclick="genererCreneaux()"]');
+    const orig = btn.textContent;
+    btn.textContent = '⏳ Génération…';
+    btn.disabled = true;
+    try {
+      const res = await Admin.genererCreneaux(30);
+      btn.textContent = '✅ Fait';
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+    } catch (err) {
+      btn.textContent = '❌ Erreur';
+      btn.disabled = false;
+      console.error(err);
+    }
+  }
+</script>
+</body>
+</html>

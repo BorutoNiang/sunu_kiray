@@ -1,0 +1,3 @@
+.env
+*.log
+reset_passwords.py
