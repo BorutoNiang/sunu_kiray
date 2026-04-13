@@ -6,8 +6,12 @@ Un médecin générique est affecté à chaque service selon la structure.
 import pymysql
 import pymysql.cursors
 import os
+import sys
 from datetime import date, timedelta
 from dotenv import load_dotenv
+
+# Charger .env depuis backend/ quel que soit l'endroit d'où on lance le script
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 load_dotenv()
 
