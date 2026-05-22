@@ -1,0 +1,84 @@
+@startuml Sequence_Redeploiement
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam sequenceArrowColor #00c896
+skinparam sequenceParticipantBackgroundColor #0e2019
+skinparam sequenceParticipantFontColor #e8f5f0
+skinparam sequenceParticipantBorderColor #00e5a0
+skinparam titleFontSize 16
+
+title Diagramme de Sequence -- Redeploiement d un Medecin
+
+actor "Administrateur" as A
+actor "Medecin" as M
+participant "dashboard.html" as DA
+participant "medecin.html" as DM
+participant "FastAPI" as BE
+database "MySQL" as DB
+
+== Detection de surcharge ==
+
+BE -> DB : CALL verifier_charge_structure(id)
+DB -> DB : Calcul taux_charge = charge/capacite * 100
+alt Taux >= seuil_alerte
+  DB -> DB : INSERT INTO alertes (priorite, message)
+  DB --> BE : Alerte creee
+  BE --> DA : Alerte visible dans le dashboard
+end
+
+== Proposition de redeploiement par l admin ==
+
+A -> DA : Consulte les alertes actives
+DA -> BE : GET /alertes
+BE -> DB : SELECT alertes WHERE est_traitee = 0
+DB --> BE : Liste des alertes
+BE --> DA : Alertes avec structures concernees
+
+A -> DA : Consulte les medecins redeployables
+DA -> BE : GET /medecins/redeployables
+BE -> DB : SELECT * FROM vue_medecins_redeployables
+DB --> BE : Medecins disponibles et consentants
+BE --> DA : Liste des medecins
+
+A -> DA : Remplit le formulaire de redeploiement\n(medecin, structure destination, dates, motif)
+DA -> BE : POST /redeplois\n{medecin_id, structure_destination_id, date_debut, date_fin, motif}
+BE -> DB : INSERT INTO redeplois (statut='propose')
+BE -> DB : INSERT INTO notifications (type='proposition_redeploiement')
+DB --> BE : Redeploiement cree, notification envoyee
+BE --> DA : 201 {id: rdp_id}
+DA --> A : Confirmation de la proposition
+
+== Reponse du medecin ==
+
+M -> DM : Consulte ses missions
+DM -> BE : GET /medecins/{id}/planning
+BE -> DB : SELECT missions en attente
+DB --> BE : Missions proposees
+BE --> DM : Liste des missions
+
+M -> DM : Clique Accepter ou Refuser
+DM -> BE : PUT /redeplois/{id}/repondre\n{statut: 'accepte', note_medecin: '...'}
+BE -> DB : UPDATE redeplois SET statut = 'accepte'
+
+alt Mission acceptee
+  BE -> DB : UPDATE medecins SET disponibilite = 'en_mission'
+  DB --> BE : OK
+  BE --> DM : Confirmation
+  DM --> M : Mission acceptee
+else Mission refusee
+  BE -> DB : UPDATE redeplois SET statut = 'refuse'
+  DB --> BE : OK
+  BE --> DM : Confirmation
+  DM --> M : Mission refusee
+end
+
+== Traitement de l alerte ==
+
+A -> DA : Clique Traiter sur l alerte
+DA -> BE : PUT /alertes/{id}/traiter\n{action_effectuee: 'Redeploiement propose'}
+BE -> DB : UPDATE alertes SET est_traitee=1, traitee_le=NOW()
+DB --> BE : OK
+BE --> DA : Alerte marquee comme traitee
+DA --> A : Compteur alertes mis a jour
+
+@enduml

@@ -1,0 +1,43 @@
+@startuml Etat_RendezVous
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam stateBackgroundColor #0e2019
+skinparam stateFontColor #e8f5f0
+skinparam stateBorderColor #00e5a0
+skinparam arrowColor #00c896
+skinparam titleFontSize 16
+
+title Machine a Etats -- Cycle de vie d un Rendez-vous
+
+[*] --> confirme : Patient cree le RDV\n(POST /rendez-vous)
+
+confirme --> en_cours : Medecin demarre\n(PUT /statut {statut: en_cours})
+confirme --> annule_patient : Patient annule\n(PUT /annuler)
+confirme --> annule_medecin : Medecin/Admin annule\n(PUT /annuler)
+confirme --> absent : Patient ne vient pas\n(PUT /statut {statut: absent})\nou nettoyage automatique au demarrage
+
+en_cours --> termine : Medecin termine\n(PUT /statut {statut: termine, notes_medecin})
+
+annule_patient --> [*] : Slot libere\n(nb_slots_pris - 1)
+annule_medecin --> [*] : Slot libere\n(nb_slots_pris - 1)
+absent --> [*]
+termine --> [*]
+
+note right of confirme
+  Code de confirmation genere
+  Notification creee en base
+  Slot disponibilite decremente
+end note
+
+note right of termine
+  Notes medicales enregistrees
+  Visible dans dossier patient
+end note
+
+note bottom of absent
+  Declenche automatiquement
+  au demarrage du serveur
+  pour les RDV passes
+end note
+
+@enduml

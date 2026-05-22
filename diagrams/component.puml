@@ -1,0 +1,104 @@
+@startuml Diagramme_Composants
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam componentBackgroundColor #0e2019
+skinparam componentFontColor #e8f5f0
+skinparam componentBorderColor #00e5a0
+skinparam interfaceBackgroundColor #00e5a0
+skinparam packageBorderColor #2a5040
+skinparam packageBackgroundColor #1d493dff
+skinparam arrowColor #00c896
+skinparam titleFontSize 16
+
+title Diagramme de Composants -- Sunu Kiray
+
+package "Frontend (HTML/CSS/JS)" {
+  [auth.html] as AUTH
+  [dashboard.html] as DASH
+  [medecin.html] as MED
+  [patient.html] as PAT
+  [index.html] as IDX
+  [api.js] as APIJS
+
+  AUTH --> APIJS
+  DASH --> APIJS
+  MED --> APIJS
+  PAT --> APIJS
+  IDX --> APIJS
+}
+
+package "Backend (FastAPI - Python 3.13)" {
+  package "Routers" {
+    [auth.py] as RAUTH
+    [structures.py] as RSTRUCT
+    [medecins.py] as RMED
+    [rendez_vous.py] as RRDV
+    [alertes.py] as RALT
+    [redeplois.py] as RRDP
+    [dashboard.py] as RDASH
+    [admin.py] as RADM
+  }
+
+  [main.py] as MAIN
+  [security.py] as SEC
+  [database.py] as DB
+  [utils.py] as UTILS
+
+  MAIN --> RAUTH
+  MAIN --> RSTRUCT
+  MAIN --> RMED
+  MAIN --> RRDV
+  MAIN --> RALT
+  MAIN --> RRDP
+  MAIN --> RDASH
+  MAIN --> RADM
+
+  RAUTH --> SEC
+  RAUTH --> DB
+  RSTRUCT --> DB
+  RMED --> DB
+  RRDV --> DB
+  RALT --> DB
+  RRDP --> DB
+  RDASH --> DB
+  RADM --> DB
+
+  RRDV --> UTILS
+  RMED --> UTILS
+  RDASH --> UTILS
+}
+
+package "Base de donnees (MySQL 8)" {
+  database "sunu_kiray" as MYSQL {
+    [Tables] as TAB
+    [Vues] as VUE
+    [Procedures] as PROC
+  }
+}
+
+package "Scripts utilitaires" {
+  [generate_disponibilites.py] as GEN
+  [reset_passwords.py] as RESET
+  [seed_data.sql] as SEED
+  [horaires.sql] as HOR
+}
+
+' Connexions inter-packages
+APIJS --> MAIN : HTTP/JSON\nREST API
+DB --> MYSQL : pymysql
+GEN --> MYSQL : SQL direct
+SEED --> MYSQL : SQL direct
+HOR --> MYSQL : SQL direct
+
+' Interfaces exposees
+interface "HTTP :8001" as HTTP
+interface "JWT Bearer" as JWT
+interface "StaticFiles /app" as STATIC
+
+MAIN -- HTTP
+MAIN -- JWT
+MAIN -- STATIC
+APIJS --> HTTP
+APIJS --> JWT
+
+@enduml

@@ -264,9 +264,8 @@
           <div id="medecin-info" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem;">
             <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem;font-weight:500;">Médecin affecté</div>
             <div style="display:flex;align-items:center;gap:.75rem;">
-              <div style="width:38px;height:38px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--green);">AD</div>
-              <div><div style="font-size:.88rem;font-weight:500;color:var(--text);">Dr. Amadou Diallo</div><div style="font-size:.72rem;color:var(--muted);">Cardiologue · Disponible</div></div>
-              <div style="margin-left:auto;font-size:.7rem;background:var(--green-dim);color:var(--green);padding:.2rem .6rem;border-radius:100px;font-weight:600;">⭐ 4.8</div>
+              <div id="med-avatar" style="width:38px;height:38px;border-radius:50%;background:var(--green-dim);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--green);">—</div>
+              <div><div id="med-nom" style="font-size:.88rem;font-weight:500;color:var(--text);">Sélectionnez un créneau</div><div id="med-spec" style="font-size:.72rem;color:var(--muted);">Le médecin sera affiché après choix du créneau</div></div>
             </div>
           </div>
           <div class="wizard-actions">
@@ -307,7 +306,7 @@
           <div class="recap-grid">
             <div class="recap-item"><div class="recap-label">Structure</div><div class="recap-val" id="recap-struct">—</div></div>
             <div class="recap-item"><div class="recap-label">Service</div><div class="recap-val" id="recap-service">—</div></div>
-            <div class="recap-item"><div class="recap-label">Médecin</div><div class="recap-val">Dr. Amadou Diallo</div></div>
+            <div class="recap-item"><div class="recap-label">Médecin</div><div class="recap-val" id="recap-medecin">—</div></div>
             <div class="recap-item"><div class="recap-label">Date & heure</div><div class="recap-val" id="recap-date">—</div></div>
           </div>
           <div style="font-size:.8rem;font-weight:500;color:var(--text);margin-bottom:.5rem;">Motif de consultation (facultatif)</div>
@@ -522,6 +521,11 @@
     el.classList.add('selected');
     selServiceId = id; selServiceName = name;
     document.getElementById('recap-service').textContent = name;
+    // Réinitialiser le médecin (sera mis à jour après sélection du créneau)
+    document.getElementById('med-nom').textContent = 'Sélectionnez un créneau';
+    document.getElementById('med-spec').textContent = name;
+    document.getElementById('med-avatar').textContent = '?';
+    document.getElementById('recap-medecin').textContent = '—';
     document.getElementById('medecin-info').style.display = 'block';
   }
 
@@ -530,33 +534,46 @@
   let calMonth = new Date().getMonth(); // 0-indexed
   const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-  function renderCal() {
+  async function renderCal() {
     const grid = document.getElementById('cal-grid');
     document.getElementById('cal-month-label').textContent = MOIS[calMonth] + ' ' + calYear;
-    // Garder les en-têtes
     const heads = Array.from(grid.querySelectorAll('.cal-head'));
     grid.innerHTML = '';
     heads.forEach(h => grid.appendChild(h));
 
     const today = new Date(); today.setHours(0,0,0,0);
     const firstDay = new Date(calYear, calMonth, 1);
-    // Lundi=0 … Dimanche=6
-    let startOffset = (firstDay.getDay() + 6) % 7;
+    const startOffset = (firstDay.getDay() + 6) % 7;
     for (let i = 0; i < startOffset; i++) {
       const blank = document.createElement('div');
       blank.className = 'cal-day disabled';
       grid.appendChild(blank);
     }
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    // Récupérer les dates disponibles en un seul appel si structure+service sélectionnés
+    let datesDispos = new Set();
+    if (selStructId && selServiceId) {
+      try {
+        const dates = await RendezVous.datesDisponibles(selStructId, selServiceId, calYear, calMonth + 1);
+        datesDispos = new Set(dates);
+      } catch (e) { console.error('Erreur dates dispos:', e); }
+    }
+
     for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(calYear, calMonth, d);
-      const iso  = date.toISOString().split('T')[0];
-      const div  = document.createElement('div');
+      const date   = new Date(calYear, calMonth, d);
+      const iso    = date.toISOString().split('T')[0];
+      const div    = document.createElement('div');
       const isPast = date < today;
       const isToday = date.getTime() === today.getTime();
-      div.className = 'cal-day' + (isPast ? ' disabled' : ' has-slot') + (isToday ? ' today' : '');
+      const hasSlot = !isPast && (selStructId && selServiceId ? datesDispos.has(iso) : true);
+
+      div.className = 'cal-day' +
+        (isPast || (selStructId && selServiceId && !hasSlot) ? ' disabled' : '') +
+        (hasSlot ? ' has-slot' : '') +
+        (isToday ? ' today' : '');
       div.textContent = d;
-      if (!isPast) div.onclick = () => selectDay(div, iso);
+      if (hasSlot) div.onclick = () => selectDay(div, iso);
       grid.appendChild(div);
     }
   }
@@ -565,7 +582,7 @@
     calMonth += dir;
     if (calMonth > 11) { calMonth = 0; calYear++; }
     if (calMonth < 0)  { calMonth = 11; calYear--; }
-    renderCal();
+    renderCal(); // async, pas besoin d'await ici
   }
 
   // Initialiser le calendrier quand on arrive à l'étape 3
@@ -615,10 +632,12 @@
     selDispoId = dispoId; selHeure = heure;
     document.getElementById('recap-date').textContent = (selDateLabel || '—') + ' à ' + heure;
     // Mettre à jour le médecin affiché
-    const mInfo = document.getElementById('medecin-info');
-    if (mInfo && medecinNom) {
-      const nameEl = mInfo.querySelector('[style*="font-weight:500"]');
-      if (nameEl) nameEl.textContent = medecinNom;
+    if (medecinNom) {
+      const initials = medecinNom.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      document.getElementById('med-avatar').textContent = initials;
+      document.getElementById('med-nom').textContent = medecinNom;
+      document.getElementById('med-spec').textContent = selServiceName || '';
+      document.getElementById('recap-medecin').textContent = medecinNom;
     }
   }
 

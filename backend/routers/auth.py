@@ -1,26 +1,37 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from database import get_db
 from security import hash_password, verify_password, create_token, get_current_user
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import secrets
 
 router = APIRouter(tags=["Auth"])
+limiter = Limiter(key_func=get_remote_address)
 
 class RegisterBody(BaseModel):
-    nom: str
-    prenom: str
-    email: EmailStr
-    telephone: str
-    mot_de_passe: str
-    role: str
+    nom:            str
+    prenom:         str
+    email:          EmailStr
+    telephone:      str
+    mot_de_passe:   str
+    role:           str
     date_naissance: Optional[str] = None
-    sexe: Optional[str] = None
-    ville: Optional[str] = None
-    specialite: Optional[str] = None
-    numero_ordre: Optional[str] = None
-    structure_id: Optional[int] = None
-    grade: Optional[str] = "generaliste"
+    sexe:           Optional[str] = None
+    ville:          Optional[str] = None
+    specialite:     Optional[str] = None
+    numero_ordre:   Optional[str] = None
+    structure_id:   Optional[int] = None
+    grade:          Optional[str] = "generaliste"
+
+    def validate_role(self):
+        if self.role not in ("patient", "medecin", "administrateur"):
+            raise ValueError("Rôle invalide.")
+        if self.sexe and self.sexe not in ("masculin", "feminin", "autre"):
+            raise ValueError("Sexe invalide.")
+        if len(self.mot_de_passe) < 8:
+            raise ValueError("Mot de passe trop court (min. 8 caractères).")
 
 class LoginBody(BaseModel):
     email: EmailStr
@@ -34,7 +45,12 @@ class ResetBody(BaseModel):
     nouveau_mot_de_passe: str
 
 @router.post("/register", status_code=201)
-def register(body: RegisterBody):
+@limiter.limit("5/minute")
+def register(request: Request, body: RegisterBody):
+    try:
+        body.validate_role()
+    except ValueError as e:
+        raise HTTPException(422, str(e))
     db = get_db()
     try:
         with db.cursor() as cur:
@@ -74,7 +90,8 @@ def register(body: RegisterBody):
         db.close()
 
 @router.post("/login")
-def login(body: LoginBody):
+@limiter.limit("10/minute")
+def login(request: Request, body: LoginBody):
     db = get_db()
     try:
         with db.cursor() as cur:

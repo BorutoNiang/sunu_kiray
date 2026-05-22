@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import get_db
 from security import get_current_user, require_role
+from utils import fix_rows
 
 router = APIRouter(tags=["Structures"])
 

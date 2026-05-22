@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from database import get_db
 from security import require_role
+from utils import fix_rows
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -36,8 +37,8 @@ def stats(user=Depends(require_role("administrateur"))):
             "rdv_aujourd_hui": rdv_aujourd_hui,
             "alertes_actives": alertes_actives,
             "total_patients": total_patients,
-            "charge_structures": charge_structures,
-            "rdv_semaine": rdv_semaine,
+            "charge_structures": fix_rows(charge_structures),
+            "rdv_semaine": fix_rows(rdv_semaine),
         }}
     finally:
         db.close()

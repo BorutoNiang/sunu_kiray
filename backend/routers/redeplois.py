@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import get_db
 from security import require_role
+from utils import fix_rows
 
 router = APIRouter(tags=["Redéploiements"])
 
@@ -90,6 +91,6 @@ def index(user=Depends(require_role("administrateur"))):
             for k in ('date_debut','date_fin','created_at'):
                 if isinstance(r.get(k), (datetime.date, datetime.datetime)):
                     r[k] = str(r[k])
-        return {"success": True, "message": "OK", "data": rows}
+        return {"success": True, "message": "OK", "data": fix_rows(rows)}
     finally:
         db.close()

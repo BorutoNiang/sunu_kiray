@@ -150,6 +150,9 @@ const RendezVous = {
   disponibilites(structure_id, service_id, date) {
     return apiFetch(`/rendez-vous/disponibilites?structure_id=${structure_id}&service_id=${service_id}&date=${date}`);
   },
+  datesDisponibles(structure_id, service_id, annee, mois) {
+    return apiFetch(`/rendez-vous/dates-disponibles?structure_id=${structure_id}&service_id=${service_id}&annee=${annee}&mois=${mois}`);
+  },
   create(disponibilite_id, motif = '') {
     return apiFetch('/rendez-vous', {
       method: 'POST',
@@ -239,6 +242,17 @@ function requireLogin(role = null) {
       window.location.href = 'auth.html';
     }
   }
+}
+
+// ── Sécurité — échapper le HTML pour éviter XSS ──────────
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // ── Utilitaire heure ─────────────────────────────────────

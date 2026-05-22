@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from database import get_db
 from security import require_role
+from utils import fix_rows
 
 router = APIRouter(tags=["Alertes"])
 

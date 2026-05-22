@@ -1,0 +1,51 @@
+@startuml Diagramme_Deploiement
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam nodeBackgroundColor #0e2019
+skinparam nodeFontColor #e8f5f0
+skinparam nodeBorderColor #00e5a0
+skinparam artifactBackgroundColor #1e3d32
+skinparam artifactFontColor #e8f5f0
+skinparam arrowColor #00c896
+skinparam titleFontSize 16
+
+title Diagramme de Deploiement -- Sunu Kiray (Environnement local)
+
+node "Poste de developpement\n(Windows 10/11)" as PC {
+
+  node "Python 3.13" as PY {
+    artifact "uvicorn\n(serveur ASGI)" as UV
+    artifact "FastAPI App\n(main.py)" as APP
+    artifact "Routers\n(8 modules)" as ROUTERS
+    artifact "security.py\n(JWT + bcrypt)" as SEC
+  }
+
+  node "MySQL 8.0" as MYSQL {
+    artifact "sunu_kiray\n(base de donnees)" as DB
+    artifact "Procedures stockees\n(generer_disponibilites)" as PROC
+    artifact "Vues SQL\n(vue_charge_structures)" as VIEWS
+  }
+
+  node "Navigateur Web\n(Chrome / Edge)" as BROWSER {
+    artifact "Frontend\n(HTML/CSS/JS)" as FE
+    artifact "localStorage\n(JWT token)" as LS
+  }
+
+  UV --> APP : charge
+  APP --> ROUTERS : inclut
+  APP --> SEC : utilise
+  ROUTERS --> DB : pymysql\n(port 3306)
+  DB --> PROC : execute
+  DB --> VIEWS : expose
+
+  FE --> UV : HTTP GET/POST\n(port 8001)
+  FE --> LS : stocke/lit JWT
+}
+
+note bottom of PC
+  Demarrage : double-clic sur start.bat
+  URL Frontend : http://localhost:8001/app/auth.html
+  URL API Docs : http://localhost:8001/docs
+end note
+
+@enduml

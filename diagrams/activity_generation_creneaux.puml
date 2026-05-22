@@ -1,0 +1,51 @@
+@startuml Activite_Generation_Creneaux
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam activityBackgroundColor #0e2019
+skinparam activityFontColor #e8f5f0
+skinparam activityBorderColor #00e5a0
+skinparam arrowColor #00c896
+skinparam titleFontSize 16
+
+title Diagramme d Activite -- Generation automatique des creneaux
+
+|Medecin|
+start
+:Definir ses horaires hebdomadaires\n(jour, heure debut/fin, nb patients);
+:Sauvegarder dans horaires_medecins;
+
+|Systeme|
+:Recevoir la demande de generation\n(POST /admin/generer-creneaux\nou bouton dashboard);
+
+:Appeler CALL generer_disponibilites(30);
+
+:Parcourir les 30 prochains jours;
+
+repeat
+  :Calculer le jour de la semaine\n(0=Lundi ... 5=Samedi);
+  
+  if (Dimanche ?) then (Oui)
+    :Ignorer ce jour;
+  else (Non)
+    :Chercher les horaires actifs\npour ce jour de la semaine;
+    
+    if (Horaires trouves ?) then (Oui)
+      :INSERT IGNORE INTO disponibilites\n(medecin, structure, service, date, heure, slots);
+      note right: INSERT IGNORE evite\nles doublons
+    else (Non)
+      :Passer au jour suivant;
+    endif
+  endif
+  
+repeat while (Jours restants ?) is (Oui)
+-> Non;
+
+:Retourner le nombre de creneaux generes;
+
+|Administrateur|
+:Voir confirmation dans le dashboard;
+:Creneaux visibles pour les patients;
+
+stop
+
+@enduml

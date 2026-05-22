@@ -1,0 +1,86 @@
+@startuml Sequence_Prise_RDV
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam sequenceArrowColor #00c896
+skinparam sequenceLifeLineBorderColor #1e3d32
+skinparam sequenceParticipantBackgroundColor #0e2019
+skinparam sequenceParticipantFontColor #e8f5f0
+skinparam sequenceParticipantBorderColor #00e5a0
+skinparam noteBorderColor #f5a623
+skinparam noteBackgroundColor #fff8e1
+skinparam titleFontSize 16
+
+title Diagramme de Séquence — Prise de Rendez-vous
+
+actor "Patient" as P
+participant "Frontend\n(patient.html)" as FE
+participant "api.js" as API
+participant "Backend\n(FastAPI)" as BE
+database "MySQL" as DB
+
+== Étape 1 : Sélection de la structure ==
+
+P -> FE : Clique sur une structure
+FE -> API : Structures.list()
+API -> BE : GET /structures
+BE -> DB : SELECT structures avec taux_charge
+DB --> BE : Liste des structures
+BE --> API : JSON {data: [...]}
+API --> FE : structures[]
+FE --> P : Affiche les structures avec charge
+
+== Étape 2 : Sélection du service ==
+
+P -> FE : Clique sur un service
+FE -> API : RendezVous.datesDisponibles(structureId, serviceId, annee, mois)
+API -> BE : GET /rendez-vous/dates-disponibles
+BE -> DB : SELECT DISTINCT date_travail FROM disponibilites WHERE...
+DB --> BE : Liste des dates disponibles
+BE --> API : JSON {data: ["2026-04-16", "2026-04-17", ...]}
+API --> FE : dates[]
+FE --> P : Calendrier avec jours disponibles (points verts)
+
+== Étape 3 : Sélection du créneau ==
+
+P -> FE : Clique sur une date
+FE -> API : RendezVous.disponibilites(structureId, serviceId, date)
+API -> BE : GET /rendez-vous/disponibilites?structure_id=1&service_id=2&date=2026-04-16
+BE -> DB : SELECT créneaux disponibles pour ce jour
+DB --> BE : [{id, heure_debut, medecin_nom, slots_restants}, ...]
+BE --> API : JSON {data: [...]}
+API --> FE : créneaux[]
+FE --> P : Affiche les créneaux (08:00, 14:00...)
+
+P -> FE : Sélectionne un créneau (ex: 08:00 — Dr. Diallo)
+
+== Étape 4 : Confirmation ==
+
+P -> FE : Saisit le motif et confirme
+FE -> API : RendezVous.create(disponibiliteId, motif)
+API -> BE : POST /rendez-vous\n{disponibilite_id: 5, motif: "..."}
+
+BE -> DB : BEGIN TRANSACTION
+BE -> DB : SELECT disponibilite FOR UPDATE (verrou)
+DB --> BE : Créneau disponible
+
+alt Créneau complet
+  BE --> API : 409 Conflict "Ce créneau est complet"
+  API --> FE : Erreur
+  FE --> P : Message d'erreur
+else Créneau disponible
+  BE -> DB : INSERT INTO rendez_vous (statut='confirme')
+  BE -> DB : UPDATE disponibilites SET nb_slots_pris+1
+  BE -> DB : INSERT INTO notifications (type='confirmation_rdv')
+  BE -> DB : COMMIT
+  DB --> BE : rdv_id, code_confirmation
+  BE --> API : 201 {rdv_id, code_confirmation: "482751", date_rdv, heure_rdv}
+  API --> FE : Données RDV
+  FE --> P : ✅ "RDV confirmé ! Code : 482 751"
+end
+
+note over P, DB
+  Le code de confirmation est stocké en base
+  et affiché au patient pour présentation à l'accueil
+end note
+
+@enduml

@@ -709,8 +709,8 @@
         <tbody>${rdvs.map(r => `<tr>
           <td>${new Date(r.date_rdv + 'T00:00:00').toLocaleDateString('fr-FR')}</td>
           <td>${formatHeure(r.heure_rdv)}</td>
-          <td>${r.patient_nom}</td>
-          <td>${r.medecin_nom}</td>
+          <td>${escHtml(r.patient_nom)}</td>
+          <td>${escHtml(r.medecin_nom)}</td>
           <td>${r.service}</td>
           <td>${r.structure}</td>
           <td><span style="font-size:.72rem;font-weight:600;color:${statutColor[r.statut]||'var(--muted)'}">${statutLabel[r.statut]||r.statut}</span></td>
@@ -824,14 +824,14 @@
       el.innerHTML = rows.map(r => `
         <div class="redeploi-card">
           <div class="redeploi-top">
-            <div class="redeploi-titre">${r.medecin_nom} (${r.specialite}) → ${r.structure_destination}</div>
+            <div class="redeploi-titre">${escHtml(r.medecin_nom)} (${escHtml(r.specialite)}) → ${escHtml(r.structure_destination)}</div>
             <span style="font-size:.72rem;font-weight:600;padding:.2rem .6rem;border-radius:100px;background:rgba(0,0,0,.2);color:${rdpStatutColor[r.statut]||'var(--muted)'}">${rdpStatutLabel[r.statut]||r.statut}</span>
           </div>
           <div class="redeploi-detail">
             <span>🏥 Depuis : ${r.structure_origine}</span>
             <span>📅 ${r.date_debut} → ${r.date_fin}</span>
-            <span>📝 ${r.motif}</span>
-            ${r.note_medecin ? `<span>💬 ${r.note_medecin}</span>` : ''}
+            <span>📝 ${escHtml(r.motif)}</span>
+            ${r.note_medecin ? `<span>💬 ${escHtml(r.note_medecin)}</span>` : ''}
           </div>
         </div>`).join('');
     } catch (err) { el.innerHTML = `<div style="color:var(--red);padding:1rem">${err.message}</div>`; }

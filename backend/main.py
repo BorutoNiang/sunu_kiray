@@ -1,15 +1,25 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from logger import get_logger
 import os
 
 load_dotenv()
+log = get_logger("main")
 
 from routers import auth, structures, medecins, rendez_vous, alertes, redeplois, dashboard, admin
 
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(title="Sunu Kiray API", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.on_event("startup")
 def startup():
@@ -22,10 +32,13 @@ def startup():
                 "UPDATE rendez_vous SET statut='absent' "
                 "WHERE statut='confirme' AND date_rdv < CURDATE()"
             )
+            affected = cur.rowcount
         db.commit()
         db.close()
-    except Exception:
-        pass
+        if affected:
+            log.info(f"Startup : {affected} RDV passés marqués absents.")
+    except Exception as e:
+        log.error(f"Startup cleanup error: {e}")
 
 # CORS
 origins = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost").split(",")

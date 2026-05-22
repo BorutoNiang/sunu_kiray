@@ -1,0 +1,116 @@
+@startuml Diagramme_Cas_Utilisation_Sunu_Kiray
+!theme plain
+skinparam backgroundColor #06100e
+skinparam actorBackgroundColor #0c1f1a
+skinparam actorBorderColor #00e5a0
+skinparam usecaseBackgroundColor #0e2019
+skinparam usecaseBorderColor #1e3d32
+skinparam usecaseFontColor #e8f5f0
+skinparam arrowColor #00e5a0
+skinparam packageBorderColor #2a5040
+skinparam packageBackgroundColor #0c1f1a
+skinparam titleFontColor #e8f5f0
+skinparam titleFontSize 16
+
+title Diagramme de Cas d'Utilisation — Sunu Kiray
+
+' Acteurs
+actor "Patient" as P #00e5a0
+actor "Médecin" as M #f5a623
+actor "Administrateur" as A #4f8fff
+actor "Système" as S #7aa899
+
+' ─── ESPACE PATIENT ───
+package "Espace Patient" {
+  usecase "S'inscrire" as UC1
+  usecase "Se connecter" as UC2
+  usecase "Prendre un RDV" as UC3
+  usecase "Choisir une structure" as UC3a
+  usecase "Choisir un service" as UC3b
+  usecase "Choisir un créneau" as UC3c
+  usecase "Recevoir code confirmation" as UC3d
+  usecase "Consulter mes RDV" as UC4
+  usecase "Annuler un RDV" as UC5
+  usecase "Modifier mon profil" as UC6
+  usecase "Consulter mon dossier" as UC7
+}
+
+' ─── ESPACE MÉDECIN ───
+package "Espace Médecin" {
+  usecase "Consulter son planning" as UC8
+  usecase "Démarrer une consultation" as UC9
+  usecase "Terminer une consultation" as UC10
+  usecase "Marquer un patient absent" as UC11
+  usecase "Gérer ses disponibilités" as UC12
+  usecase "Accepter/Refuser une mission" as UC13
+  usecase "Consulter ses statistiques" as UC14
+  usecase "Modifier sa disponibilité" as UC15
+}
+
+' ─── ESPACE ADMIN ───
+package "Espace Administrateur" {
+  usecase "Voir le tableau de bord" as UC16
+  usecase "Gérer les structures" as UC17
+  usecase "Gérer les médecins" as UC18
+  usecase "Gérer tous les RDV" as UC19
+  usecase "Traiter une alerte" as UC20
+  usecase "Proposer un redéploiement" as UC21
+  usecase "Générer les créneaux" as UC22
+  usecase "Consulter les rapports" as UC23
+}
+
+' ─── SYSTÈME ───
+package "Système automatique" {
+  usecase "Détecter surcharge structure" as UC24
+  usecase "Générer alerte automatique" as UC25
+  usecase "Marquer RDV passés absents" as UC26
+  usecase "Générer créneaux hebdomadaires" as UC27
+}
+
+' Relations Patient
+P --> UC1
+P --> UC2
+P --> UC3
+UC3 ..> UC3a : <<include>>
+UC3 ..> UC3b : <<include>>
+UC3 ..> UC3c : <<include>>
+UC3 ..> UC3d : <<include>>
+P --> UC4
+P --> UC5
+P --> UC6
+P --> UC7
+
+' Relations Médecin
+M --> UC2
+M --> UC8
+M --> UC9
+M --> UC10
+M --> UC11
+M --> UC12
+M --> UC13
+M --> UC14
+M --> UC15
+
+' Relations Admin
+A --> UC2
+A --> UC16
+A --> UC17
+A --> UC18
+A --> UC19
+A --> UC20
+A --> UC21
+A --> UC22
+A --> UC23
+
+' Relations Système
+S --> UC24
+S --> UC25
+S --> UC26
+S --> UC27
+UC24 ..> UC25 : <<include>>
+UC22 ..> UC27 : <<extend>>
+
+' Héritage
+UC2 <.. UC1 : <<extend>>
+
+@enduml

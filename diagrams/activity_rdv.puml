@@ -1,0 +1,72 @@
+@startuml Activite_Flux_RDV
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam activityBackgroundColor #0e2019
+skinparam activityFontColor #e8f5f0
+skinparam activityBorderColor #00e5a0
+skinparam arrowColor #00c896
+skinparam titleFontSize 16
+
+title Diagramme d Activite -- Flux complet d un Rendez-vous
+
+|Patient|
+start
+:Se connecter;
+:Choisir une structure de sante;
+:Choisir un service medical;
+:Consulter le calendrier des disponibilites;
+
+if (Des creneaux disponibles ?) then (Oui)
+  :Selectionner une date et un creneau;
+  :Saisir le motif (facultatif);
+  :Confirmer le rendez-vous;
+  
+  |Systeme|
+  :Verifier disponibilite (FOR UPDATE);
+  
+  if (Creneau encore disponible ?) then (Oui)
+    :Creer le RDV (statut = confirme);
+    :Decrementer nb_slots_pris;
+    :Generer code de confirmation;
+    :Creer notification;
+    
+    |Patient|
+    :Recevoir le code de confirmation;
+    :Se presenter a l hopital le jour J;
+    
+    |Medecin|
+    :Voir le RDV dans son planning;
+    :Demarrer la consultation (en_cours);
+    :Effectuer la consultation;
+    :Saisir les notes medicales;
+    :Terminer la consultation (termine);
+    
+    |Patient|
+    :Consultation terminee;
+    :Visible dans dossier medical;
+    stop
+    
+  else (Non - Creneau complet)
+    |Patient|
+    :Choisir un autre creneau;
+    note right: Retour a la selection
+    stop
+  endif
+  
+else (Non)
+  :Choisir une autre structure ou date;
+  stop
+endif
+
+|Patient|
+if (Annulation necessaire ?) then (Oui)
+  :Annuler le RDV;
+  |Systeme|
+  :Liberer le slot (nb_slots_pris - 1);
+  :Mettre statut = annule_patient;
+  stop
+else (Non)
+  stop
+endif
+
+@enduml

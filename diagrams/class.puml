@@ -1,0 +1,187 @@
+@startuml Diagramme_Classes_Sunu_Kiray
+!theme plain
+skinparam backgroundColor #fafafa
+skinparam classBackgroundColor #ffffff
+skinparam classBorderColor #1e3d32
+skinparam classHeaderBackgroundColor #b5c5bfff
+skinparam classHeaderFontColor #e8f5f0
+skinparam arrowColor #00c896
+skinparam titleFontSize 16
+
+title Diagramme de Classes — Sunu Kiray
+
+' ─── UTILISATEUR ───
+class Utilisateur {
+  +id : int
+  +nom : String
+  +prenom : String
+  +email : String
+  +telephone : String
+  +mot_de_passe : String <<bcrypt>>
+  +role : Enum {patient, medecin, administrateur}
+  +date_naissance : Date
+  +sexe : Enum
+  +ville : String
+  +est_actif : Boolean
+  +derniere_connexion : DateTime
+  --
+  +seConnecter(email, mdp) : JWT
+  +sInscrire(data) : Utilisateur
+  +modifierProfil(data) : void
+  +reinitialiserMotDePasse(token, mdp) : void
+}
+
+' ─── MÉDECIN ───
+class Medecin {
+  +id : int
+  +specialite : String
+  +numero_ordre : String
+  +grade : Enum
+  +disponibilite : Enum
+  +peut_etre_redeploye : Boolean
+  +rayon_deploiement_km : int
+  --
+  +getPlanning(debut, fin) : List<RendezVous>
+  +changerDisponibilite(statut) : void
+  +ajouterHoraire(horaire) : void
+  +supprimerHoraire(id) : void
+}
+
+' ─── STRUCTURE ───
+class StructureSante {
+  +id : int
+  +nom : String
+  +type_structure : Enum
+  +adresse : String
+  +ville : String
+  +region : String
+  +capacite_journaliere : int
+  +charge_actuelle : int
+  +seuil_alerte : int
+  +statut : Enum
+  --
+  +getTauxCharge() : float
+  +getNiveauCharge() : String
+  +getMedecinsDisponibles() : List<Medecin>
+  +getServices() : List<Service>
+  +mettreAJourCharge(valeur) : void
+}
+
+' ─── SERVICE ───
+class Service {
+  +id : int
+  +nom : String
+  +duree_consultation_mn : int
+  +nb_medecins_requis : int
+  +nb_medecins_actuels : int
+  +est_actif : Boolean
+}
+
+' ─── HORAIRE ───
+class HoraireMedecin {
+  +id : int
+  +jour_semaine : int <<0=Lun, 5=Sam>>
+  +heure_debut : Time
+  +heure_fin : Time
+  +nb_slots : int
+  +est_actif : Boolean
+}
+
+' ─── DISPONIBILITÉ ───
+class Disponibilite {
+  +id : int
+  +date_travail : Date
+  +heure_debut : Time
+  +heure_fin : Time
+  +nb_slots_max : int
+  +nb_slots_pris : int
+  --
+  +getSlotsRestants() : int
+  +estComplet() : Boolean
+}
+
+' ─── RENDEZ-VOUS ───
+class RendezVous {
+  +id : int
+  +date_rdv : Date
+  +heure_rdv : Time
+  +motif : String
+  +statut : Enum
+  +code_confirmation : String
+  +notes_medecin : String
+  --
+  +confirmer() : void
+  +annuler(role) : void
+  +demarrer() : void
+  +terminer(notes) : void
+  +marquerAbsent() : void
+}
+
+' ─── ALERTE ───
+class Alerte {
+  +id : int
+  +type_alerte : Enum
+  +priorite : Enum {faible, moyenne, haute, critique}
+  +message : String
+  +taux_charge : int
+  +est_traitee : Boolean
+  +traitee_le : DateTime
+  --
+  +traiter(admin, action) : void
+}
+
+' ─── REDÉPLOIEMENT ───
+class Redeploiement {
+  +id : int
+  +date_debut : Date
+  +date_fin : Date
+  +statut : Enum
+  +motif : String
+  +note_medecin : String
+  --
+  +accepter(note) : void
+  +refuser(note) : void
+}
+
+' ─── NOTIFICATION ───
+class Notification {
+  +id : int
+  +type_notif : Enum
+  +canal : Enum {sms, email, inapp}
+  +titre : String
+  +message : String
+  +est_lu : Boolean
+  +est_envoye : Boolean
+}
+
+' ─── RAPPORT ───
+class Rapport {
+  +id : int
+  +type_rapport : Enum
+  +periode_debut : Date
+  +periode_fin : Date
+  +titre : String
+  +donnees_json : JSON
+}
+
+' ─── RELATIONS ───
+Utilisateur "1" -- "0..1" Medecin : est >
+Medecin "1" -- "1" StructureSante : affecté à >
+StructureSante "1" *-- "1..*" Service : propose >
+Medecin "1" *-- "0..*" HoraireMedecin : définit >
+HoraireMedecin "1" ..> "0..*" Disponibilite : génère >
+Medecin "1" -- "0..*" Disponibilite : travaille >
+StructureSante "1" -- "0..*" Disponibilite : héberge >
+Service "1" -- "0..*" Disponibilite : concerne >
+Disponibilite "1" -- "0..*" RendezVous : réserve >
+Utilisateur "1" -- "0..*" RendezVous : prend (patient) >
+Medecin "1" -- "0..*" RendezVous : reçoit >
+StructureSante "1" -- "0..*" Alerte : génère >
+Medecin "1" -- "0..*" Redeploiement : effectue >
+StructureSante "1" -- "0..*" Redeploiement : origine >
+StructureSante "1" -- "0..*" Redeploiement : destination >
+Utilisateur "1" -- "0..*" Notification : reçoit >
+RendezVous "0..1" -- "0..*" Notification : déclenche >
+Utilisateur "1" -- "0..*" Rapport : génère (admin) >
+
+@enduml
